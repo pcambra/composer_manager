@@ -63,6 +63,10 @@ function composer_manager_packages_page() {
  */
 function composer_manager_rebuild_form($form, &$form_state) {
 
+  $form['placeholder'] = array(
+    '#markup' => '<p><em>' . t('Placeholder for a package status UI.') . '</em></p><br/>',
+  );
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Rebuild composer.json file')
