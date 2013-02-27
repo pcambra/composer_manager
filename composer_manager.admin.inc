@@ -42,10 +42,40 @@ function composer_manager_settings_form($form, &$form_state) {
 }
 
 /**
- * Page callback; Shows the status of all packages requires by contrib.
+ * Page callback; Shows the status of all packages required by contrib.
  */
 function composer_manager_packages_page() {
   $build = array();
 
+  if (variable_get('composer_manager_generate_file', 1)) {
+    $build['refresh_form'] = drupal_get_form('composer_manager_rebuild_form');
+  }
+
   return $build;
+}
+
+/**
+ * Exposes a button that forces a rebuild of the composer.json file.
+ *
+ * @see composer_manager_rebuild_form_submit()
+ *
+ * @ingroup forms
+ */
+function composer_manager_rebuild_form($form, &$form_state) {
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Rebuild composer.json file')
+  );
+
+  $form['#submit'] = array('composer_manager_rebuild_form_submit');
+
+  return $form;
+}
+
+/**
+ * Form submission handler for composer_manager_rebuild_form().
+ */
+function composer_manager_rebuild_form_submit($form, &$form_state) {
+  composer_manager_write_file();
 }

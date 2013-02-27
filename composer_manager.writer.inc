@@ -94,6 +94,13 @@ function composer_manager_put_file($uri, array $data) {
   if (!@file_put_contents($file_uri, drupal_json_encode($data))) {
     throw new \RuntimeException(t('Error writing composer.json file: @file', array('@file' => $file_uri)));
   }
+
+  if (user_access('administer site configuration')) {
+    $dir = drupal_realpath($uri);
+    $command = file_exists($uri . '/composer.lock') ? 'update' : 'install';
+    drupal_set_message(t('A composer.json file was written to @dir.', array('@dir' => $dir)));
+    drupal_set_message(t('It is strongly recommended to run a Composer !command command in the directory above.', array('!command' => $command)));
+  }
 }
 
 /**

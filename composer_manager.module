@@ -73,12 +73,14 @@ function composer_manager_write_file() {
     $data = composer_manager_build_json();
     drupal_alter('composer_manager_json', $data);
     if ($data) {
-      $dir = variable_get('composer_manager_file_dir', 'public://composer');
-      composer_manager_put_file($dir, $data);
+      $uri = variable_get('composer_manager_file_dir', 'public://composer');
+      composer_manager_put_file($uri, $data);
     }
   }
   catch (\RuntimeException $e) {
-    drupal_set_message(t('Error writing composer.json file'), 'error');
+    if (user_access('administer site configuration')) {
+      drupal_set_message(t('Error writing composer.json file'), 'error');
+    }
     watchdog_exception('composer_manager', $e);
     return FALSE;
   }
