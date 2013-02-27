@@ -25,6 +25,17 @@ function composer_manager_modules_enabled($modules) {
 }
 
 /**
+ * Registers the autoloader for all third-party packages.
+ */
+function composer_manager_register_autoloader() {
+  static $registered = FALSE;
+  if (!$registered) {
+    $registered = TRUE;
+    require composer_manager_vendor_dir() . '/autoload.php';
+  }
+}
+
+/**
  * Writes the consolidated composer.json file for all modules that require
  * third-party packages managed by Composer.
  *
@@ -46,17 +57,6 @@ function composer_manager_write_file() {
     return FALSE;
   }
   return TRUE;
-}
-
-/**
- * Registers the autoloader for all third-party packages.
- */
-function composer_manager_register_autoloader() {
-  static $registered = FALSE;
-  if (!$registered) {
-    $registered = TRUE;
-    require composer_manager_vendor_dir() . '/autoload.php';
-  }
 }
 
 /**
