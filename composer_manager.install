@@ -1,0 +1,14 @@
+<?php
+
+/**
+ * @file
+ * Install, update, and uninstall functions for the Composer module.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function composer_manager_uninstall() {
+  variable_del('composer_manager_vendor_dir');
+  variable_del('composer_manager_file_dir');
+}

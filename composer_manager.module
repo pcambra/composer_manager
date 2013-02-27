@@ -1,0 +1,74 @@
+<?php
+
+/**
+ * @file
+ * Provides consolidated management of third-party Composer-compatible packages
+ * required by contributed modules.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function composer_manager_menu() {
+  $items = array();
+
+  return $items;
+}
+
+/**
+ * Implements hook_modules_enabled().
+ *
+ * Scans all modules for composer.json files.
+ */
+function composer_manager_modules_enabled($modules) {
+  composer_manager_write_file();
+}
+
+/**
+ * Writes the consolidated composer.json file for all modules that require
+ * third-party packages managed by Composer.
+ *
+ * @return bool
+ */
+function composer_manager_write_file() {
+  require_once __DIR__ . '/composer_manager.writer.inc';
+  try {
+    $data = composer_manager_build_json();
+    drupal_alter('composer_manager_json', $data);
+    if ($data) {
+      $dir = variable_get('composer_manager_file_dir', 'public://composer');
+      composer_manager_put_file($dir, $data);
+    }
+  }
+  catch (\RuntimeException $e) {
+    drupal_set_message(t('Error writing composer.json file'), 'error');
+    watchdog_exception('composer_manager', $e);
+    return FALSE;
+  }
+  return TRUE;
+}
+
+/**
+ * Registers the autoloader for all third-party packages.
+ */
+function composer_manager_register_autoloader() {
+  static $registered = FALSE;
+  if (!$registered) {
+    $registered = TRUE;
+    require composer_manager_vendor_dir() . '/autoload.php';
+  }
+}
+
+/**
+ * Returns the path to the vendor directory.
+ *
+ * @return string
+ */
+function composer_manager_vendor_dir() {
+  $vendor_dir = variable_get('composer_manager_vendor_dir', 'sites/all/libraries/composer');
+  $is_absolute = (0 === strpos($vendor_dir, '/'));
+  if (!$is_absolute) {
+    $vendor_dir = DRUPAL_ROOT . '/' . $vendor_dir;
+  }
+  return $vendor_dir;
+}
