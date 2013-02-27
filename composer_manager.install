@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Install, update, and uninstall functions for the Composer module.
+ * Install, update, and uninstall functions for the Composer Manager module.
  */
 
 /**
@@ -10,5 +10,6 @@
  */
 function composer_manager_uninstall() {
   variable_del('composer_manager_vendor_dir');
+  variable_del('composer_manager_generate_file');
   variable_del('composer_manager_file_dir');
 }

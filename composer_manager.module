@@ -12,6 +12,30 @@
 function composer_manager_menu() {
   $items = array();
 
+  $items['admin/config/system/composer-manager'] = array(
+    'title' => 'Composer Manager',
+    'description' => 'Configure the composer file and vendor directories.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('composer_manager_settings_form'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'composer_manager.admin.inc',
+  );
+
+  $items['admin/config/system/composer-manager/settings'] = array(
+    'title' => 'Settings',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+
+  $items['admin/config/system/composer-manager/packages'] = array(
+    'title' => 'Packages',
+    'description' => 'Select the search engine type being connected to.',
+    'page callback' => 'composer_manager_packages_page',
+    'access arguments' => array('administer site configuration'),
+    'file' => 'composer_manager.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
   return $items;
 }
 
@@ -21,7 +45,9 @@ function composer_manager_menu() {
  * Scans all modules for composer.json files.
  */
 function composer_manager_modules_enabled($modules) {
-  composer_manager_write_file();
+  if (variable_get('composer_manager_generate_file', 1)) {
+    composer_manager_write_file();
+  }
 }
 
 /**

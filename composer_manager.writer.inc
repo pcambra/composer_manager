@@ -54,7 +54,6 @@ function composer_manager_build_json() {
       'provide',
       'suggest',
       'repositories',
-
     );
     foreach ($to_merge as $key) {
       if (isset($parsed[$key])) {

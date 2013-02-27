@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Hooks provided by the Composer module.
+ * Hooks provided by the Composer Manager module.
  */
 
 /**
@@ -17,7 +17,7 @@
  *   The array that will be converted to JSON, which is the contents of the
  *   composer.json file.
  */
-function hook_composer_manager_json_alter(&$data) {
+function hook_composer_json_alter(&$data) {
   $data['minimum-stability'] = 'dev';
 }
 
