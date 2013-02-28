@@ -69,7 +69,7 @@ function composer_manager_rebuild_form($form, &$form_state) {
 
   $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Rebuild composer.json file')
+    '#value' => t('Rebuild composer.json file'),
   );
 
   $form['#submit'] = array('composer_manager_rebuild_form_submit');
