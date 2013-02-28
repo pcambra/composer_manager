@@ -33,8 +33,10 @@ function composer_manager_build_json() {
       throw new \UnexpectedValueException(t('Expecting contents of file to be valid JSON: @file', $args));
     }
 
+    // We will only merge the module's composer.json if it has some additional
+    // dependencies stated in "require".
     if (!isset($parsed['require'])) {
-      throw new \UnexpectedValueException(t('Expecting JSON to contain the "require" property: @file', $args));
+      continue;
     }
 
     if (!$data) {
