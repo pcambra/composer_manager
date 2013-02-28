@@ -11,14 +11,13 @@
  */
 
 /**
- * Allow modules to alter the json data in the composer file.
+ * Allow modules to alter the consolidated JSON array.
  *
- * @param array &$data
- *   The array that will be converted to JSON, which is the contents of the
- *   composer.json file.
+ * @param array &$json
+ *   The consolidated JSON compiled from each module's composer.json file.
  */
-function hook_composer_json_alter(&$data) {
-  $data['minimum-stability'] = 'dev';
+function hook_composer_json_alter(&$json) {
+  $json['minimum-stability'] = 'dev';
 }
 
 /**
