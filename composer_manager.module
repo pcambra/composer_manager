@@ -14,23 +14,23 @@ function composer_manager_menu() {
 
   $items['admin/config/system/composer-manager'] = array(
     'title' => 'Composer Manager',
-    'description' => 'Configure the composer file and vendor directories.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('composer_manager_settings_form'),
+    'description' => 'Select the search engine type being connected to.',
+    'page callback' => 'composer_manager_packages_page',
     'access arguments' => array('administer site configuration'),
     'file' => 'composer_manager.admin.inc',
   );
 
-  $items['admin/config/system/composer-manager/settings'] = array(
-    'title' => 'Settings',
+  $items['admin/config/system/composer-manager/packages'] = array(
+    'title' => 'Packages',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
   );
 
-  $items['admin/config/system/composer-manager/packages'] = array(
-    'title' => 'Packages',
+  $items['admin/config/system/composer-manager/settings'] = array(
+    'title' => 'Settings',
     'description' => 'Select the search engine type being connected to.',
-    'page callback' => 'composer_manager_packages_page',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('composer_manager_settings_form'),
     'access arguments' => array('administer site configuration'),
     'file' => 'composer_manager.admin.inc',
     'type' => MENU_LOCAL_TASK,
