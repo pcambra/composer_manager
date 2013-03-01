@@ -23,7 +23,7 @@ function composer_manager_settings_form($form, &$form_state) {
     '#title' => 'Composer File Directory',
     '#type' => 'textfield',
     '#default_value' => variable_get('composer_manager_file_dir', 'public://composer'),
-    '#description' => t('The directory where the composer.json file will be generated and where Composer commands are run.'),
+    '#description' => t('The directory containing the composer.json file and where Composer commands are run.'),
   );
 
   $form['composer_manager_generate_file'] = array(

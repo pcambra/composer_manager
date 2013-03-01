@@ -3,3 +3,5 @@ description = Provides consolidated management of third-party, Composer-compatib
 package = Other
 core = 7.x
 php = 5.3
+
+configure = admin/config/system/composer-manager
