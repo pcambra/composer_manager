@@ -56,8 +56,14 @@ function composer_manager_modules_enabled($modules) {
 function composer_manager_register_autoloader() {
   static $registered = FALSE;
   if (!$registered) {
+    $autoloader = composer_manager_vendor_dir() . '/autoload.php';
+    if (!file_exists($autoloader)) {
+      $args = array('@url' => url('admin/config/system/composer-manager', array('absolute' => TRUE)));
+      $message = t('Autoloader not found. See @url for more details.', $args);
+      throw new \RuntimeException($message);
+    }
     $registered = TRUE;
-    require composer_manager_vendor_dir() . '/autoload.php';
+    require $autoloader;
   }
 }
 
