@@ -43,7 +43,10 @@ function drush_composer_manager_composer_execute() {
 
   // @todo We need to be more flexible here.
   if (!file_exists('composer.phar')) {
-    drush_print(dt('Downloading composer...'));
+    if (!drush_confirm(dt('Download and install Composer?'))) {
+      drush_print(dt('Composer installation aborted.'));
+      return TRUE;
+    }
     drush_download_file('https://getcomposer.org/installer');
     drush_op_system('php installer');
   }
