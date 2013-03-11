@@ -29,7 +29,7 @@ function composer_manager_drush_command() {
  * Executes a composer command.
  */
 function drush_composer_manager_composer_execute() {
-  $uri = variable_get('composer_manager_file_dir', 'public://composer');
+  $uri = variable_get('composer_manager_file_dir', file_default_scheme() . '://composer');
   if (!$dir = drupal_realpath($uri)) {
     return drush_set_error(dt('Error resolving path: @uri', array('@uri' => $uri)));
   }

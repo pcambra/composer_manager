@@ -123,12 +123,12 @@ function composer_manager_write_file() {
   }
 
   require_once __DIR__ . '/composer_manager.writer.inc';
-  
+
   try {
     $data = composer_manager_fetch_data();
     $json = composer_manager_build_json($data);
     if ($json) {
-      $dir_uri = variable_get('composer_manager_file_dir', 'public://composer');
+      $dir_uri = variable_get('composer_manager_file_dir', file_default_scheme() . '://composer');
       composer_manager_put_file($dir_uri, $json);
     }
   }

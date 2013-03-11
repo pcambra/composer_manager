@@ -22,7 +22,7 @@ function composer_manager_settings_form($form, &$form_state) {
   $form['composer_manager_file_dir'] = array(
     '#title' => 'Composer File Directory',
     '#type' => 'textfield',
-    '#default_value' => variable_get('composer_manager_file_dir', 'public://composer'),
+    '#default_value' => variable_get('composer_manager_file_dir', file_default_scheme() . '://composer'),
     '#description' => t('The directory containing the composer.json file and where Composer commands are run.'),
   );
 
@@ -88,7 +88,7 @@ function composer_manager_packages_page() {
 
   if (!$error) {
     $generate_file = variable_get('composer_manager_generate_file', 1);
-    $uri = variable_get('composer_manager_file_dir', 'public://composer');
+    $uri = variable_get('composer_manager_file_dir', file_default_scheme() . '://composer');
 
     if (file_exists($uri . '/composer.lock') || !$generate_file) {
       $build['packages']['#empty'] = t('No packages are installed.');
@@ -148,7 +148,7 @@ function composer_manager_rebuild_form_submit($form, &$form_state) {
 function composer_manager_lockfile_load() {
   $json = &drupal_static(__FUNCTION__);
   if ($json === NULL) {
-    $dir_uri = variable_get('composer_manager_file_dir', 'public://composer');
+    $dir_uri = variable_get('composer_manager_file_dir', file_default_scheme() . '://composer');
     $file_uri = $dir_uri . '/composer.lock';
 
     if (file_exists($file_uri)) {
@@ -215,7 +215,7 @@ function composer_manager_run_command($options, &$stderr = NULL) {
     2 => array("pipe", "w"),
   );
 
-  $uri = variable_get('composer_manager_file_dir', 'public://composer');
+  $uri = variable_get('composer_manager_file_dir', file_default_scheme() . '://composer');
 
   if (!$cwd = drupal_realpath($uri)) {
     throw new \RuntimeException(t('Error resolving path: @uri', array('@uri' => $uri)));
