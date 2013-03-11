@@ -83,6 +83,7 @@ function composer_manager_packages_page() {
     '#theme' => 'table',
     '#header' => $header,
     '#rows' => $rows,
+    '#caption' => t('Installed Packages'),
   );
 
   if (!$error) {
