@@ -42,12 +42,55 @@ function composer_manager_menu() {
 /**
  * Implements hook_modules_enabled().
  *
- * Scans all modules for composer.json files.
+ * @see composer_manager_write_if_changed()
  */
 function composer_manager_modules_enabled($modules) {
+  composer_manager_write_if_changed($modules);
+}
+
+/**
+ * Implements hook_modules_disabled().
+ *
+ * @see composer_manager_write_if_changed()
+ */
+function composer_manager_modules_disabled($modules) {
+  composer_manager_write_if_changed($modules);
+}
+
+/**
+ * Writes the composer.json file if one of the enabled / disabled modules
+ * has a composer.json file.
+ *
+ * This is a primitive check to ensure that the composer.json file is generated
+ * only when it has changes.
+ *
+ * @param array $modules
+ *   The enabled / disabled modules being scanned for a composer.json file.
+ */
+function composer_manager_write_if_changed(array $modules) {
   if (variable_get('composer_manager_generate_file', 1)) {
-    composer_manager_write_file();
+    if (composer_manager_has_composer_file($modules)) {
+      composer_manager_write_file();
+    }
   }
+}
+
+/**
+ * Returns TRUE if at least one module has a composer.json file.
+ *
+ * @param array $modules
+ *   An array of modules being checked.
+ *
+ * @return boolean
+ */
+function composer_manager_has_composer_file(array $modules) {
+  foreach ($modules as $module) {
+    $module_path = drupal_get_path('module', $module);
+    if (file_exists($module_path . '/composer.json')) {
+      return TRUE;
+    }
+  }
+  return FALSE;
 }
 
 /**
