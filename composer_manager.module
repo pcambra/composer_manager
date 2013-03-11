@@ -116,7 +116,14 @@ function composer_manager_register_autoloader() {
  * @return bool
  */
 function composer_manager_write_file() {
+  // Ensure only one process runs at a time. 10 seconds is more than enough.
+  if (!lock_acquire(__FUNCTION__, 10)) {
+    lock_wait(__FUNCTION__, 10);
+    return FALSE;
+  }
+
   require_once __DIR__ . '/composer_manager.writer.inc';
+  
   try {
     $data = composer_manager_fetch_data();
     $json = composer_manager_build_json($data);
@@ -130,8 +137,10 @@ function composer_manager_write_file() {
       drupal_set_message(t('Error writing composer.json file'), 'error');
     }
     watchdog_exception('composer_manager', $e);
+    lock_release(__FUNCTION__);
     return FALSE;
   }
+  lock_release(__FUNCTION__);
   return TRUE;
 }
 
