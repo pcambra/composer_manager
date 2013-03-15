@@ -63,7 +63,7 @@ function composer_manager_build_json(array $data) {
     if (!$combined) {
       $combined = array(
         'require' => array(),
-        'config' => array('vendor-dir' => composer_manager_vendor_dir()),
+        'config' => array('vendor-dir' => composer_manager_relative_vendor_dir()),
       );
     }
 
@@ -168,4 +168,50 @@ function composer_manager_compare_stability($a, $b) {
   else {
     return $number[$a] < $number[$b] ? -1 : 1;
   }
+}
+
+/**
+ * Returns the realpath to the Composer file directory.
+ *
+ * @return string
+ *
+ * @throws \RuntimeException
+ */
+function composer_manager_file_dir() {
+  $dir_uri = variable_get('composer_manager_file_dir', file_default_scheme() . '://composer');
+  if (!file_prepare_directory($dir_uri, FILE_CREATE_DIRECTORY)) {
+    throw new \RuntimeException(t('Error creating directory: @dir', array('@dir' => $dir_uri)));
+  }
+  if (0 === strpos($dir_uri, 'public://')) {
+    file_create_htaccess($dir_uri, TRUE);
+  }
+  if (!$realpath = drupal_realpath($dir_uri)) {
+    throw new \RuntimeException(t('Error resolving directory: @dir', array('@dir' => $dir_uri)));
+  }
+  return $realpath;
+}
+
+/**
+ * Returns the vendor directory relative to the composer file directory.
+ *
+ * @return string
+ *
+ * @throws \RuntimeException
+ */
+function composer_manager_relative_vendor_dir() {
+  $dirs_to =  explode('/', ltrim(composer_manager_vendor_dir(), '/'));
+  $dirs_from = explode('/', ltrim(composer_manager_file_dir(), '/'));
+
+  // Strip the matching directories so that both arrays are relative to a common
+  // position. The count of the $dirs_from array tells us how many levels up we
+  // need to traverse from the directory containing the composer.json file, and
+  // $dirs_to is relative to the common position.
+  foreach ($dirs_to as $pos => $dir) {
+    if ($dirs_to[$pos] != $dirs_from[$pos]) {
+      break;
+    }
+    unset($dirs_to[$pos], $dirs_from[$pos]);
+  }
+
+  return str_repeat('../', count($dirs_from)) . join('/', $dirs_to);
 }
