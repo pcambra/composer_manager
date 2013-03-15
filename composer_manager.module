@@ -61,14 +61,14 @@ function composer_manager_modules_disabled($modules) {
  * Writes the composer.json file if one of the enabled / disabled modules
  * has a composer.json file.
  *
- * This is a primitive check to ensure that the composer.json file is generated
- * only when it has changes.
+ * This is a primitive check to ensure that the composer.json file is built only
+ * when it has changes.
  *
  * @param array $modules
  *   The enabled / disabled modules being scanned for a composer.json file.
  */
 function composer_manager_write_if_changed(array $modules) {
-  if (variable_get('composer_manager_generate_file', 1)) {
+  if (variable_get('composer_manager_autobuild_file', 1)) {
     if (composer_manager_has_composer_file($modules)) {
       composer_manager_write_file();
     }

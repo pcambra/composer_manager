@@ -10,6 +10,16 @@
  */
 function composer_manager_uninstall() {
   variable_del('composer_manager_vendor_dir');
-  variable_del('composer_manager_generate_file');
+  variable_del('composer_manager_autobuild_file');
   variable_del('composer_manager_file_dir');
+}
+
+/**
+ * Change the name of the "composer_manager_generate_file" variable to
+ * "composer_manager_autobuild_file".
+ */
+function composer_manager_update_7100() {
+  $autobuild = variable_get('composer_manager_generate_file', 1);
+  variable_set('composer_manager_autobuild_file', $autobuild);
+  variable_del('composer_manager_generate_file');
 }

@@ -26,10 +26,10 @@ function composer_manager_settings_form($form, &$form_state) {
     '#description' => t('The directory containing the composer.json file and where Composer commands are run.'),
   );
 
-  $form['composer_manager_generate_file'] = array(
-    '#title' => 'Automatically generate a consolidated composer.json file',
+  $form['composer_manager_autobuild_file'] = array(
+    '#title' => 'Automatically build the consolidated composer.json file',
     '#type' => 'checkbox',
-    '#default_value' => variable_get('composer_manager_generate_file', 1),
+    '#default_value' => variable_get('composer_manager_autobuild_file', 1),
     '#description' => t('Combine the requirements in all composer.json files that are included with contributed modules. Uncheck to manage a custom composer.json file in the vendor directory above.'),
   );
 
@@ -86,11 +86,11 @@ function composer_manager_packages_page() {
     '#caption' => t('Installed Packages'),
   );
 
-  if (!$error) {
-    $generate_file = variable_get('composer_manager_generate_file', 1);
-    $uri = variable_get('composer_manager_file_dir', file_default_scheme() . '://composer');
+  $autobuild = variable_get('composer_manager_autobuild_file', 1);
 
-    if (file_exists($uri . '/composer.lock') || !$generate_file) {
+  if (!$error) {
+    $uri = variable_get('composer_manager_file_dir', file_default_scheme() . '://composer');
+    if (file_exists($uri . '/composer.lock') || !$autobuild) {
       $build['packages']['#empty'] = t('No packages are installed.');
     }
     elseif (file_exists($uri . '/composer.json')) {
@@ -104,7 +104,7 @@ function composer_manager_packages_page() {
     $build['packages']['#empty'] = t('Error loading package information.');
   }
 
-  if (variable_get('composer_manager_generate_file', 1)) {
+  if ($autobuild) {
     $build['refresh_form'] = drupal_get_form('composer_manager_rebuild_form');
   }
 

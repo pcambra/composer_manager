@@ -17,9 +17,13 @@ function composer_manager_drush_command() {
     'aliases' => array('composer'),
   );
 
-  $items['composer-rebuild-file'] = array(
+  $items['composer-json-rebuild'] = array(
     'description' => 'Rebuilds the consolidated composer.json file.',
     'allow-additional-options' => TRUE,
+    'aliases' => array(
+      'composer-rebuild',
+      'composer-rebuild-file',
+    ),
   );
 
   return $items;
@@ -62,13 +66,13 @@ function drush_composer_manager_composer_execute() {
 /**
  * Rebuilds the consolidated composer.json file.
  */
-function drush_composer_manager_composer_rebuild_file() {
+function drush_composer_manager_composer_json_rebuild() {
   $success = composer_manager_write_file();
   if ($success) {
-    drush_log(dt('Completed generating composer.json file.'), 'ok');
+    drush_log(dt('Completed building composer.json file.'), 'ok');
     return TRUE;
   }
   else {
-    return drush_set_error(dt('Error generating composer.json file.'));
+    return drush_set_error(dt('Error building composer.json file.'));
   }
 }
