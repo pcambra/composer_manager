@@ -115,8 +115,19 @@ function composer_manager_put_file($dir_uri, array $json) {
 
   file_create_htaccess($dir_uri, TRUE);
 
+  // Make the composer.json file human readable for PHP >= 5.4.
+  // @see drupal_json_encode()
+  // @see http://drupal.org/node/1943608
+  $json_options = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT;
+  if (defined('JSON_PRETTY_PRINT')) {
+    $json_options = $json_options | JSON_PRETTY_PRINT;
+  }
+  if (defined('JSON_UNESCAPED_SLASHES')) {
+    $json_options = $json_options | JSON_UNESCAPED_SLASHES;
+  }
+
   $file_uri = $dir_uri . '/composer.json';
-  if (!@file_put_contents($file_uri, drupal_json_encode($json))) {
+  if (!@file_put_contents($file_uri, json_encode($json, $json_options))) {
     throw new \RuntimeException(t('Error writing composer.json file: @file', array('@file' => $file_uri)));
   }
 
