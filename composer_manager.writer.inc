@@ -124,7 +124,8 @@ function composer_manager_put_file($dir_uri, array $json) {
   // Make the composer.json file human readable for PHP >= 5.4.
   // @see drupal_json_encode()
   // @see http://drupal.org/node/1943608
-  $json_options = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT;
+  // @see http://drupal.org/node/1948012
+  $json_options = JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT;
   if (defined('JSON_PRETTY_PRINT')) {
     $json_options = $json_options | JSON_PRETTY_PRINT;
   }
