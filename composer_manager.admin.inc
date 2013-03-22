@@ -8,6 +8,8 @@
 /**
  * Administrative settings for the Composer Manager module.
  *
+ * @see composer_manager_settings_form_validate()
+ *
  * @ingroup forms
  */
 function composer_manager_settings_form($form, &$form_state) {
@@ -33,7 +35,21 @@ function composer_manager_settings_form($form, &$form_state) {
     '#description' => t('Combine the requirements in all composer.json files that are included with contributed modules. Uncheck to manage a custom composer.json file in the vendor directory above.'),
   );
 
+  $form['#validate'] = array('composer_manager_settings_form_validate');
+
   return system_settings_form($form);
+}
+
+/**
+ * Form validation handler for composer_manager_settings_form().
+ */
+function composer_manager_settings_form_validate($form, &$form_state) {
+  require_once __DIR__ . '/composer_manager.writer.inc';
+  $autobuild_file = $form_state['values']['composer_manager_autobuild_file'];
+  $file_dir = $form_state['values']['composer_manager_file_dir'];
+  if ($autobuild_file && !composer_manager_prepare_directory($file_dir)) {
+    form_set_error('composer_manager_file_dir', t('Conposer file directory must be writable'));
+  }
 }
 
 /**

@@ -146,11 +146,7 @@ function composer_manager_build_json(array $data) {
  * @throws \RuntimeException
  */
 function composer_manager_put_file($dir_uri, array $json) {
-  if (!file_prepare_directory($dir_uri, FILE_CREATE_DIRECTORY)) {
-    throw new \RuntimeException(t('Error creating directory: @dir', array('@dir' => $dir_uri)));
-  }
-
-  file_create_htaccess($dir_uri, TRUE);
+  composer_manager_prepare_directory($dir_uri);
 
   // Make the composer.json file human readable for PHP >= 5.4.
   // @see drupal_json_encode()
@@ -175,6 +171,24 @@ function composer_manager_put_file($dir_uri, array $json) {
     drupal_set_message(t('A composer.json file was written to @path.', array('@path' => drupal_realpath($dir_uri))));
     drupal_set_message(t('It is strongly recommended to run a Composer !command command in the directory above.', array('!command' => $command)));
   }
+}
+
+/**
+ * Ensures the directory is created and protected via .htaccess if necessary.
+ *
+ * @param string $directory
+ *   The URI or path to the directory being prepared.
+ *
+ * @return bool
+ */
+function composer_manager_prepare_directory($directory) {
+  if (!file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
+    return FALSE;
+  }
+  if (0 === strpos($directory, 'public://')) {
+    file_create_htaccess($directory, TRUE);
+  }
+  return TRUE;
 }
 
 /**
@@ -217,11 +231,8 @@ function composer_manager_compare_stability($a, $b) {
  */
 function composer_manager_file_dir() {
   $dir_uri = variable_get('composer_manager_file_dir', file_default_scheme() . '://composer');
-  if (!file_prepare_directory($dir_uri, FILE_CREATE_DIRECTORY)) {
+  if (!composer_manager_prepare_directory($dir_uri)) {
     throw new \RuntimeException(t('Error creating directory: @dir', array('@dir' => $dir_uri)));
-  }
-  if (0 === strpos($dir_uri, 'public://')) {
-    file_create_htaccess($dir_uri, TRUE);
   }
   if (!$realpath = drupal_realpath($dir_uri)) {
     throw new \RuntimeException(t('Error resolving directory: @dir', array('@dir' => $dir_uri)));
