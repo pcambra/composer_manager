@@ -80,7 +80,12 @@ function composer_manager_build_json(array $data) {
     );
     foreach ($to_merge as $key) {
       if (isset($json[$key])) {
-        $combined[$key] = array_merge($combined[$key], $json[$key]);
+        if (isset($combined[$key]) && is_array($combined[$key])) {
+          $combined[$key] = array_merge($combined[$key], $json[$key]);
+        }
+        else {
+          $combined[$key] = $json[$key];
+        }
       }
     }
 
