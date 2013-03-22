@@ -78,6 +78,7 @@ function composer_manager_build_json(array $data) {
       'suggest',
       'repositories',
     );
+
     foreach ($to_merge as $key) {
       if (isset($json[$key])) {
         if (isset($combined[$key]) && is_array($combined[$key])) {
