@@ -32,7 +32,7 @@ function composer_manager_fetch_data() {
       throw new \UnexpectedValueException(t('Expecting contents of file to be valid JSON: @file', $args));
     }
 
-    $data[] = $json;
+    $data[$module] = $json;
   }
   return $data;
 }
@@ -42,8 +42,9 @@ function composer_manager_fetch_data() {
  * composer.json file.
  *
  * @param array $data
- *   An array of JSON arrays parsed from composer.json files. This is usually
- *   the return value of composer_manager_fetch_data().
+ *   An array of JSON arrays parsed from composer.json files keyed by the module
+ *   that defines it. This is usually the return value of the
+ *   composer_manager_fetch_data() function.
  *
  * @return array
  *   The consolidated JSON array that will be written to a compsoer.json file.
@@ -52,7 +53,7 @@ function composer_manager_fetch_data() {
  */
 function composer_manager_build_json(array $data) {
   $combined = array();
-  foreach ($data as $json) {
+  foreach ($data as $module => $json) {
 
     // We will only merge the module's composer.json if it has some additional
     // dependencies stated in "require".
@@ -87,6 +88,36 @@ function composer_manager_build_json(array $data) {
         else {
           $combined[$key] = $json[$key];
         }
+      }
+    }
+
+    // Merge in the "psr-0" autoload options.
+    if (isset($json['autoload']['psr-0'])) {
+      $namespaces = (array) $json['autoload']['psr-0'];
+      foreach ($json['autoload']['psr-0'] as $namesapce => $dirs) {
+        $dirs = (array) $dirs;
+        array_walk($dirs, 'composer_manager_relative_autoload_path', $module);
+        if (!isset($combined['autoload']['psr-0'][$namesapce])) {
+          $combined['autoload']['psr-0'][$namesapce] = array();
+        }
+        $combined['autoload']['psr-0'][$namesapce] = array_merge(
+          $combined['autoload']['psr-0'][$namesapce], $dirs
+        );
+      }
+    }
+
+    // Merge in the "classmap" and "files" autoload options.
+    $autoload_options = array('classmap', 'files');
+    foreach ($autoload_options as $option) {
+      if (isset($json['autoload'][$option])) {
+        $dirs = (array) $json['autoload'][$option];
+        array_walk($dirs, 'composer_manager_relative_autoload_path', $module);
+        if (!isset($combined['autoload'][$option])) {
+          $combined['autoload'][$option] = array();
+        }
+        $combined['autoload'][$option] = array_merge(
+          $combined['autoload'][$option], $dirs
+        );
       }
     }
 
@@ -199,6 +230,19 @@ function composer_manager_file_dir() {
 }
 
 /**
+ * Returns the path for the autoloaded directory or class relative to the
+ * directory containing the composer.json file.
+ */
+function composer_manager_relative_autoload_path(&$path, $key, $module) {
+  static $dir_from = NULL;
+  if (NULL === $dir_from) {
+    $dir_from = composer_manager_file_dir();
+  }
+  $dir_to = DRUPAL_ROOT . '/' . drupal_get_path('module', $module) . '/' . $path;
+  $path = composer_manager_relative_dir($dir_to, $dir_from);
+}
+
+/**
  * Returns the vendor directory relative to the composer file directory.
  *
  * @return string
@@ -206,8 +250,26 @@ function composer_manager_file_dir() {
  * @throws \RuntimeException
  */
 function composer_manager_relative_vendor_dir() {
-  $dirs_to =  explode('/', ltrim(composer_manager_vendor_dir(), '/'));
-  $dirs_from = explode('/', ltrim(composer_manager_file_dir(), '/'));
+  return composer_manager_relative_dir(
+    composer_manager_vendor_dir(),
+    composer_manager_file_dir()
+  );
+}
+
+/**
+ * Gets the path of the "to" directory relative to the "from" directory.
+ *
+ * @param array $dir_to
+ *   The absolute path of the directory that the relative path refers to.
+ * @param array $dir_from
+ *   The absolute path of the directory from which the relative path is being
+ *   calculated.
+ *
+ * @return string
+ */
+function composer_manager_relative_dir($dir_to, $dir_from) {
+  $dirs_to = explode('/', ltrim($dir_to, '/'));
+  $dirs_from = explode('/', ltrim($dir_from, '/'));
 
   // Strip the matching directories so that both arrays are relative to a common
   // position. The count of the $dirs_from array tells us how many levels up we
