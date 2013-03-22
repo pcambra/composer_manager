@@ -120,9 +120,7 @@ function composer_manager_packages_page() {
     $build['packages']['#empty'] = t('Error loading package information.');
   }
 
-  if ($autobuild) {
-    $build['refresh_form'] = drupal_get_form('composer_manager_rebuild_form');
-  }
+  $build['refresh_form'] = drupal_get_form('composer_manager_rebuild_form');
 
   return $build;
 }
@@ -135,10 +133,12 @@ function composer_manager_packages_page() {
  * @ingroup forms
  */
 function composer_manager_rebuild_form($form, &$form_state) {
+  $file_dir = variable_get('composer_manager_file_dir', file_default_scheme() . '://composer');
 
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Rebuild composer.json file'),
+    '#disabled' => !is_dir($file_dir) || !is_writable($file_dir),
   );
 
   $form['#submit'] = array('composer_manager_rebuild_form_submit');
