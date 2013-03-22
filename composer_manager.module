@@ -117,8 +117,9 @@ function composer_manager_register_autoloader() {
  */
 function composer_manager_write_file() {
   // Ensure only one process runs at a time. 10 seconds is more than enough.
+  // It is rare that a conflict will happen, and it isn't mission critical that
+  // we wait for the lock to release and regenerate the file again.
   if (!lock_acquire(__FUNCTION__, 10)) {
-    lock_wait(__FUNCTION__, 10);
     return FALSE;
   }
 
@@ -131,17 +132,18 @@ function composer_manager_write_file() {
       $dir_uri = variable_get('composer_manager_file_dir', file_default_scheme() . '://composer');
       composer_manager_put_file($dir_uri, $json);
     }
+    $success = TRUE;
   }
   catch (\RuntimeException $e) {
+    $success = FALSE;
     if (user_access('administer site configuration')) {
       drupal_set_message(t('Error writing composer.json file'), 'error');
     }
     watchdog_exception('composer_manager', $e);
-    lock_release(__FUNCTION__);
-    return FALSE;
   }
+
   lock_release(__FUNCTION__);
-  return TRUE;
+  return $success;
 }
 
 /**
