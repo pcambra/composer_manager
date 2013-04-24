@@ -110,7 +110,7 @@ function composer_manager_packages_page() {
       $build['packages']['#empty'] = t('No packages are installed.');
     }
     elseif (file_exists($uri . '/composer.json')) {
-      $build['packages']['#empty'] = t('No packages are installed. Run <code>drush composer install</code> to install the third-party libraries.');
+      $build['packages']['#empty'] = t('No packages are installed. Run <code>drush composer-manager install</code> to install the third-party libraries.');
     }
     else {
       $build['packages']['#empty'] = t('No packages are installed. Generate a composer.json file by clicking the "Rebuild composer.json file" button below.');

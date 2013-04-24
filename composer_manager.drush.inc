@@ -11,10 +11,13 @@
 function composer_manager_drush_command() {
   $items = array();
 
-  $items['composer-execute'] = array(
+  $items['composer-manager'] = array(
     'description' => 'Executes a composer command in the directory containing the composer.json file.',
     'allow-additional-options' => TRUE,
-    'aliases' => array('composer'),
+    'aliases' => array('composer-execute'),
+    'arguments' => array(
+      'command' => 'The command to run through the Composer Manager composer.json file. Defaults to "install".',
+    ),
   );
 
   $items['composer-json-rebuild'] = array(
@@ -30,37 +33,53 @@ function composer_manager_drush_command() {
 }
 
 /**
- * Executes a composer command.
+ * Executes a Composer command on Composer Manager's composer.json file.
+ *
+ * @param $command
+ *   Which command to execute on Composer Manager's composer.json file.
  */
-function drush_composer_manager_composer_execute() {
+function drush_composer_manager($command = 'install') {
   $uri = variable_get('composer_manager_file_dir', file_default_scheme() . '://composer');
   if (!$dir = drupal_realpath($uri)) {
     return drush_set_error(dt('Error resolving path: @uri', array('@uri' => $uri)));
   }
 
-  $cwd = getcwd();
-  drush_op('chdir', $dir);
-
-  if (!file_exists('composer.json')) {
-    return drush_set_error(dt('Missing composer.json file: Run `drush composer-rebuild-file`.'));
+  // Check to see if the composer.json file is available.
+  if (!file_exists($dir . '/composer.json')) {
+    // Ask the user would like to install Drush Composer.
+    if (drush_confirm(dt('The composer.json file is missing. Would you like to re-build it?'))) {
+      if (drush_invoke('composer-rebuild-file') === FALSE) {
+        return FALSE;
+      }
+    }
+    else {
+      return drush_set_error(dt('Missing composer.json file: Run `drush composer-rebuild-file`.'));
+    }
   }
 
-  // @todo We need to be more flexible here.
-  if (!file_exists('composer.phar')) {
+  // Check if Drush Composer is available.
+  if (!drush_is_command('composer')) {
+    // Ask the user would like to install Drush Composer.
     if (!drush_confirm(dt('Download and install Composer?'))) {
-      drush_print(dt('Composer installation aborted.'));
+      drush_print(dt('Drush Composer installation aborted.'));
       return TRUE;
     }
-    drush_download_file('https://getcomposer.org/installer');
-    drush_op_system('php installer');
+
+    // Download the Drush extension.
+    if (drush_invoke('dl', array('composer-8.x-1.0')) === FALSE) {
+      return drush_set_error(dt('Failed installing Drush Composer. Install manually by visiting http://drupal.org/project/composer .'));
+    }
+
+    // Clear the caches by reloading the available command files.
+    _drush_find_commandfiles(DRUSH_BOOTSTRAP_DRUSH);
   }
 
-  $options = drush_get_original_cli_args_and_options();
-  $command = 'php composer.phar ' . implode(' ', $options);
-  drush_op_system($command);
+  // Use Composer's --working-dir to override the current working directory. We
+  // handle this with $_SERVER as Drush overrides the options otherwise.
+  $_SERVER['argv'][] = '--working-dir=' . escapeshellcmd($dir);
 
-  drush_op('chdir', $cwd);
-  return TRUE;
+  // Invoke the Composer command with Drush Composer.
+  return drush_invoke('composer', array($command));
 }
 
 /**
