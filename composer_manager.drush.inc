@@ -74,12 +74,10 @@ function drush_composer_manager($command = 'install') {
     _drush_find_commandfiles(DRUSH_BOOTSTRAP_DRUSH);
   }
 
-  // Use Composer's --working-dir to override the current working directory. We
-  // handle this with $_SERVER as Drush overrides the options otherwise.
-  $_SERVER['argv'][] = '--working-dir=' . escapeshellcmd($dir);
-
-  // Invoke the Composer command with Drush Composer.
-  return drush_invoke('composer', array($command));
+  // Mock the arguments passed to Composer.
+  $workingDir = '--working-dir=' . escapeshellcmd($dir);
+  $_SERVER['argv'] = array();
+  return drush_invoke('composer', array($command, $workingDir));
 }
 
 /**
@@ -93,5 +91,21 @@ function drush_composer_manager_composer_json_rebuild() {
   }
   else {
     return drush_set_error(dt('Error building composer.json file.'));
+  }
+}
+
+/**
+ * Drush hook; Called after a project is enabled.
+ *
+ * Rebuild and re-install the Composer dependencies.
+ */
+function drush_composer_manager_post_pm_enable() {
+  // Ask whether to rebuild the Composer dependencies.
+  if (drush_confirm(dt('Build and install Composer dependencies?'))) {
+    // Rebuild the composer.json file.
+    if (drush_composer_manager_composer_json_rebuild()) {
+      // Run the Composer installation.
+      drush_composer_manager('update');
+    }
   }
 }
