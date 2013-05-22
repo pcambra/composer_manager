@@ -170,7 +170,16 @@ function composer_manager_put_file($dir_uri, array $json) {
   if (user_access('administer site configuration')) {
     $command = file_exists($dir_uri . '/composer.lock') ? 'update' : 'install';
     drupal_set_message(t('A composer.json file was written to @path.', array('@path' => drupal_realpath($dir_uri))));
-    drupal_set_message(t('It is strongly recommended to run Composer\'s <code>!command</code> command in the directory above.', array('!command' => $command)));
+    if ('admin/config/system/composer-manager' != current_path()) {
+      $args = array('!command' => $command, '@url' => url('http://drupal.org/project/composer_manager', array('absolute' => TRUE)));
+      if ('install' == $command) {
+        $message = t('Composer\'s <code>!command</code> command must be run to generate the autoloader and install the required packages.<br/>Refer to the instructions on the <a href="@url" target="_blank">Composer Manager project page</a> for installing packages.', $args);
+      }
+      else {
+        $message = t('Composer\'s <code>!command</code> command must be run to install the required packages.<br/>Refer to the instructions on the <a href="@url" target="_blank">Composer Manager project page</a> for updating packages.', $args);
+      }
+      drupal_set_message($message, 'warning');
+    }
   }
 }
 

@@ -16,16 +16,6 @@ function composer_manager_uninstall() {
 }
 
 /**
- * Change the name of the "composer_manager_generate_file" variable to
- * "composer_manager_autobuild_file".
- */
-function composer_manager_update_7100() {
-  $autobuild = variable_get('composer_manager_generate_file', 1);
-  variable_set('composer_manager_autobuild_file', $autobuild);
-  variable_del('composer_manager_generate_file');
-}
-
-/**
  * Implements hook_requirements().
  */
 function composer_manager_requirements($phase) {
@@ -53,25 +43,64 @@ function composer_manager_requirements($phase) {
   }
 
   if (!file_exists($file_dir . '/composer.json')) {
-    $requirements['composer_manager']['description'] = $t('The composer.json file was not found.') . '<br/>' . $instructions;
     $requirements['composer_manager']['value'] = $t('Missing composer.json file');
+    $requirements['composer_manager']['description'] = $t('The composer.json file was not found.') . '<br/>' . $instructions;
     $requirements['composer_manager']['severity'] = REQUIREMENT_ERROR;
   }
   elseif (!json_decode(@file_get_contents($file_dir . '/composer.json'))) {
-    $requirements['composer_manager']['description'] = $t('The composer.json file is invalid.') . '<br/>' . $instructions;
     $requirements['composer_manager']['value'] = $t('Invalid composer.json file');
+    $requirements['composer_manager']['description'] = $t('The composer.json file is invalid.') . '<br/>' . $instructions;
     $requirements['composer_manager']['severity'] = REQUIREMENT_ERROR;
   }
   elseif (!file_exists($vendor_dir . '/autoload.php')) {
+    $requirements['composer_manager']['value'] = $t('Dependencies not installed');
     $args = array('!command' => 'install', '@url' => url('http://drupal.org/project/composer_manager', array('absolute' => TRUE)));
     $requirements['composer_manager']['description'] = $t('Composer\'s <code>!command</code> command must be run to generate the autoloader and install the required packages.<br/>Refer to the instructions on the <a href="@url" target="_blank">Composer Manager project page</a> for installing packages.', $args);
-    $requirements['composer_manager']['value'] = $t('Packages not installed');
+    $requirements['composer_manager']['severity'] = REQUIREMENT_ERROR;
+  }
+  elseif ($packages = composer_manager_packages_to_install()) {
+    $requirements['composer_manager']['value'] = $t('Dependencies not installed');
+    $args = array('@packages' => join(', ', $packages), '@url' => url('http://drupal.org/project/composer_manager', array('absolute' => TRUE)));
+    $requirements['composer_manager']['description'] = $t('The following packages must be installed: @packages<br/>Refer to the instructions on the <a href="@url" target="_blank">Composer Manager project page</a> for updating packages.', $args);
     $requirements['composer_manager']['severity'] = REQUIREMENT_ERROR;
   }
   else {
-    $requirements['composer_manager']['value'] = $t('Autoloader available. Visit the <a href="@url">package status page</a> to view the status of individual packages.', array('@url' => url('admin/config/system/composer-manager')));
+    $requirements['composer_manager']['value'] = $t('Dependencies installed');
+    $requirements['composer_manager']['description'] =  $t('Visit the <a href="@url">package status page</a> to view the status of individual packages.', array('@url' => url('admin/config/system/composer-manager')));
     $requirements['composer_manager']['severity'] = REQUIREMENT_OK;
   }
 
   return $requirements;
+}
+
+/**
+ * Returns a list of packages that need to be installed.
+ *
+ * @return array
+ */
+function composer_manager_packages_to_install() {
+  $packages = array();
+
+  require_once __DIR__ . '/composer_manager.admin.inc';
+  $required = composer_manager_required_packages();
+  $installed = composer_manager_installed_packages();
+  $combined = array_unique(array_merge(array_keys($required), array_keys($installed)));
+
+  foreach ($combined as $package_name) {
+    if (!isset($installed[$package_name])) {
+      $packages[] = $package_name;
+    }
+  }
+
+  return $packages;
+}
+
+/**
+ * Change the name of the "composer_manager_generate_file" variable to
+ * "composer_manager_autobuild_file".
+ */
+function composer_manager_update_7100() {
+  $autobuild = variable_get('composer_manager_generate_file', 1);
+  variable_set('composer_manager_autobuild_file', $autobuild);
+  variable_del('composer_manager_generate_file');
 }

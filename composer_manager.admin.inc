@@ -280,20 +280,24 @@ function composer_manager_lockfile_load() {
  * @throws \RuntimeException
  */
 function composer_manager_installed_packages() {
-  $installed = array();
+  $installed = &drupal_static(__FUNCTION__, NULL);
+  if (NULL === $installed) {
+    $installed = array();
 
-  $json = composer_manager_lockfile_load();
-  if (isset($json['packages'])) {
-    foreach ($json['packages'] as $package) {
-      $installed[$package['name']] = array(
-        'version' => $package['version'],
-        'description' => !empty($package['description']) ? $package['description'] : '',
-        'homepage' => !empty($package['homepage']) ? $package['homepage'] : '',
-      );
+    $json = composer_manager_lockfile_load();
+    if (isset($json['packages'])) {
+      foreach ($json['packages'] as $package) {
+        $installed[$package['name']] = array(
+          'version' => $package['version'],
+          'description' => !empty($package['description']) ? $package['description'] : '',
+          'homepage' => !empty($package['homepage']) ? $package['homepage'] : '',
+        );
+      }
     }
+
+    ksort($installed);
   }
 
-  ksort($installed);
   return $installed;
 }
 
@@ -329,25 +333,29 @@ function composer_manager_package_dependents() {
  * @return array
  */
 function composer_manager_required_packages() {
-  require_once __DIR__ . '/composer_manager.writer.inc';
+  $required = &drupal_static(__FUNCTION__, NULL);
+  if (NULL === $required) {
+    require_once __DIR__ . '/composer_manager.writer.inc';
 
-  // Gathers package versions.
-  $required = array();
-  $data = composer_manager_fetch_data();
-  foreach ($data as $module => $json) {
-    if (isset($json['require'])) {
-      foreach ($json['require'] as $package => $version) {
-        $pattern = '@^[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9][A-Za-z0-9_.-]+$@';
-        if (preg_match($pattern, $package)) {
-          if (!isset($required[$package])) {
-            $required[$package][$version] = array();
+    // Gathers package versions.
+    $required = array();
+    $data = composer_manager_fetch_data();
+    foreach ($data as $module => $json) {
+      if (isset($json['require'])) {
+        foreach ($json['require'] as $package => $version) {
+          $pattern = '@^[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9][A-Za-z0-9_.-]+$@';
+          if (preg_match($pattern, $package)) {
+            if (!isset($required[$package])) {
+              $required[$package][$version] = array();
+            }
+            $required[$package][$version][] = $module;
           }
-          $required[$package][$version][] = $module;
         }
       }
     }
+
+    ksort($required);
   }
 
-  ksort($required);
   return $required;
 }
