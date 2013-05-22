@@ -14,7 +14,7 @@ function composer_manager_menu() {
 
   $items['admin/config/system/composer-manager'] = array(
     'title' => 'Composer Manager',
-    'description' => 'Select the search engine type being connected to.',
+    'description' => 'View the status of packages managed by Composer and configure the location of the composer.json file and verdor directory.',
     'page callback' => 'composer_manager_packages_page',
     'access arguments' => array('administer site configuration'),
     'file' => 'composer_manager.admin.inc',
@@ -28,7 +28,6 @@ function composer_manager_menu() {
 
   $items['admin/config/system/composer-manager/settings'] = array(
     'title' => 'Settings',
-    'description' => 'Select the search engine type being connected to.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('composer_manager_settings_form'),
     'access arguments' => array('administer site configuration'),

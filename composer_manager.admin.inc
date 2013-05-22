@@ -61,66 +61,145 @@ function composer_manager_packages_page() {
 
   $header = array(
     'package' => t('Package'),
-    'version' => t('Version'),
+    'version' => t('Installed Version'),
+    'requirement' => t('Version Required by Module'),
   );
 
   try {
-    $packages = composer_manager_show_packages();
+    $required = composer_manager_required_packages();
+    $installed = composer_manager_installed_packages();
+    $dependents = composer_manager_package_dependents();
+    $combined = array_unique(array_merge(array_keys($required), array_keys($installed)));
   }
   catch (\RuntimeException $e) {
     $error = TRUE;
     drupal_set_message(filter_xss_admin($e->getMessage()));
     watchdog_exception('composer_manager', $e);
-    $packages = array();
+    $combined = array();
   }
 
-  $rows = array();
-  foreach ($packages as $package_name => $package) {
+  // Whether a Composer update is needed.
+  $update_needed = FALSE;
+  // Whether different modules require different versions of the same package.
+  $has_conflicts = FALSE;
 
-    // @todo Use a theme function.
-    if (!empty($package['homepage'])) {
+  $rows = array();
+  foreach ($combined as $package_name) {
+    $is_installed = isset($installed[$package_name]);
+
+    // If the package is installed but has no dependents and is not required by
+    // any modules, then the module that required it has most likely been
+    // disabled and the package will be uninstalled on the next Composer update.
+    $not_required = $is_installed && !isset($dependents[$package_name]) && empty($required[$package_name]);
+
+    // Get the package name and description.
+    if ($is_installed && !empty($installed[$package_name]['homepage'])) {
       $options = array('attributes' => array('target' => '_blank'));
-      $name = l($package_name, $package['homepage'], $options);
+      $name = l($package_name, $installed[$package_name]['homepage'], $options);
     }
     else {
       $name = check_plain($package_name);
     }
-    if (!empty($package['description'])) {
-      $name .= '<div class="description">' . check_plain($package['description']) . '</div>';
+    if ($is_installed && !empty($installed[$package_name]['description'])) {
+      $name .= '<div class="description">' . check_plain($installed[$package_name]['description']) . '</div>';
     }
 
-    $rows[] = array(
-      'package' => $name,
-      'version' => check_plain($package['version']),
+    // Get the version required by the module.
+    $has_conflict = FALSE;
+    if ($not_required) {
+      $update_needed = TRUE;
+      $requirement = t('No longer required');
+      $requirement .= '<div class="description">' . t('Package will be removed on the next Composer update') . '</div>';
+    }
+    elseif (isset($required[$package_name])) {
+
+      // Sets message based on whether there is a potential version conflict.
+      $has_conflict = count($required[$package_name]) > 1;
+      if ($has_conflict) {
+        $has_conflicts = TRUE;
+        $requirement = t('Potential version conflict');
+      }
+      else {
+        $requirement = check_plain(key($required[$package_name]));
+      }
+
+      // Build the list of modules that require this package.
+      $modules = array();
+      $requirement .= '<div class="description">';
+      foreach ($required[$package_name] as $version => $module_names) {
+        foreach ($module_names as $module_name) {
+          $module_info = system_get_info('module', $module_name);
+          $modules[] = check_plain($module_info['name']);
+        }
+      }
+      $requirement .= t('Required by: ') . join(', ', $modules);
+      $requirement .= '</div>';
+    }
+    else {
+      // This package is a dependency of a package directly required by a
+      // module. Therefore we cannot detect the required version without using
+      // the Composer tool which is expensive and too slow for the web.
+      $requirement = t('N/A');
+      $requirement .= '<div class="description">' . t('Dependency for other packages') . '</div>';
+    }
+
+    // Get the version that is installed.
+    if ($is_installed) {
+      $instaled_version = check_plain($installed[$package_name]['version']);
+    }
+    else {
+      $update_needed = TRUE;
+      $instaled_version = t('Not installed');
+    }
+
+    // Set the row status.
+    if (!$is_installed) {
+      $class = array('error');
+    }
+    elseif ($has_conflict || $not_required) {
+      $class = array('warning');
+    }
+    else {
+      $class = array('ok');
+    }
+
+    $rows[$package_name] = array(
+      'class' => $class,
+      'data' => array(
+        'package' => $name,
+        'installed' => $instaled_version,
+        'requirement' => $requirement,
+      ),
     );
   }
 
+  ksort($rows);
   $build['packages'] = array(
     '#theme' => 'table',
     '#header' => $header,
     '#rows' => $rows,
-    '#caption' => t('Installed Packages'),
+    '#caption' => t('Status of Packages Managed by Composer'),
+    '#attributes' => array(
+      'class' => array('system-status-report'),
+    ),
   );
 
-  $autobuild = variable_get('composer_manager_autobuild_file', 1);
-
-  if (!$error) {
-    $uri = variable_get('composer_manager_file_dir', file_default_scheme() . '://composer');
-    if (file_exists($uri . '/composer.lock') || !$autobuild) {
-      $build['packages']['#empty'] = t('No packages are installed.');
-    }
-    elseif (file_exists($uri . '/composer.json')) {
-      $build['packages']['#empty'] = t('No packages are installed. Run <code>drush composer-manager install</code> to install the third-party libraries.');
-    }
-    else {
-      $build['packages']['#empty'] = t('No packages are installed. Generate a composer.json file by clicking the "Rebuild composer.json file" button below.');
-    }
-  }
-  else {
-    $build['packages']['#empty'] = t('Error loading package information.');
-  }
-
   $build['refresh_form'] = drupal_get_form('composer_manager_rebuild_form');
+
+  // Set status messages.
+  require_once __DIR__ . '/composer_manager.install';
+  $requirements = module_invoke('composer_manager', 'requirements', 'runtime');
+
+  if (REQUIREMENT_OK != $requirements['composer_manager']['severity']) {
+    drupal_set_message($requirements['composer_manager']['description'], 'error');
+  }
+  elseif ($update_needed) {
+    $args = array('!command' => 'update', '@url' => url('http://drupal.org/project/composer_manager', array('absolute' => TRUE)));
+    drupal_set_message(t('Packages need to be installed or removed by running Composer\'s <code>!command</code> command.<br/>Refer to the instructions on the <a href="@url" target="_blank">Composer Manager project page</a> for updating packages.', $args), 'warning');
+  }
+  if ($has_conflicts) {
+    drupal_set_message(t('Potentially conflicting versions of the same package are required by different modules.'), 'warning');
+  }
 
   return $build;
 }
@@ -180,28 +259,26 @@ function composer_manager_lockfile_load() {
     }
   }
   return $json;
-
 }
 
 /**
- * Reads package versions from the composer.lock file.
+ * Reads installed package versions from the composer.lock file.
  *
  * NOTE: Tried using `composer show -i`, but it didn't return the versions or
  * descriptions for some strange reason even though it does on the command line.
  *
- * @return array|FALSE
- *   An associative array of package version information, FALSE if the
- *   composer.lock file is not written or readable.
+ * @return array
+ *   An associative array of package version information.
  *
  * @throws \RuntimeException
  */
-function composer_manager_show_packages() {
-  $package_info = array();
+function composer_manager_installed_packages() {
+  $installed = array();
 
   $json = composer_manager_lockfile_load();
   if (isset($json['packages'])) {
     foreach ($json['packages'] as $package) {
-      $package_info[$package['name']] = array(
+      $installed[$package['name']] = array(
         'version' => $package['version'],
         'description' => !empty($package['description']) ? $package['description'] : '',
         'homepage' => !empty($package['homepage']) ? $package['homepage'] : '',
@@ -209,6 +286,61 @@ function composer_manager_show_packages() {
     }
   }
 
-  ksort($package_info);
-  return $package_info;
+  ksort($installed);
+  return $installed;
+}
+
+/**
+ * Returns each installed packages dependents.
+ *
+ * @return array
+ *   An associative array of installed packages to their dependents.
+ *
+ * @throws \RuntimeException
+ */
+function composer_manager_package_dependents() {
+  $dependents = array();
+
+  $json = composer_manager_lockfile_load();
+  if (isset($json['packages'])) {
+    foreach ($json['packages'] as $package) {
+      if (!empty($package['require'])) {
+        foreach ($package['require'] as $dependent => $version) {
+          $dependents[$dependent][] = $package['name'];
+        }
+      }
+    }
+  }
+
+  return $dependents;
+}
+
+/**
+ * Returns the packages, versions, and the modules that require them in the
+ * composer.json files contained in contributed modules.
+ *
+ * @return array
+ */
+function composer_manager_required_packages() {
+  require_once __DIR__ . '/composer_manager.writer.inc';
+
+  // Gathers package versions.
+  $required = array();
+  $data = composer_manager_fetch_data();
+  foreach ($data as $module => $json) {
+    if (isset($json['require'])) {
+      foreach ($json['require'] as $package => $version) {
+        $pattern = '@^[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9][A-Za-z0-9_.-]+$@';
+        if (preg_match($pattern, $package)) {
+          if (!isset($required[$package])) {
+            $required[$package][$version] = array();
+          }
+          $required[$package][$version][] = $module;
+        }
+      }
+    }
+  }
+
+  ksort($required);
+  return $required;
 }
