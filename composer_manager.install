@@ -12,6 +12,7 @@ function composer_manager_uninstall() {
   variable_del('composer_manager_vendor_dir');
   variable_del('composer_manager_autobuild_file');
   variable_del('composer_manager_file_dir');
+  variable_del('composer_manager_autobuild_packages');
 }
 
 /**

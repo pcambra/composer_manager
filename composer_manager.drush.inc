@@ -97,14 +97,34 @@ function drush_composer_manager_composer_json_rebuild() {
 /**
  * Drush hook; Called after a project is enabled.
  *
- * Rebuild and re-install the Composer dependencies.
+ * @see drush_composer_manager_write_if_changed()
  */
 function drush_composer_manager_post_pm_enable() {
-  // Ask whether to rebuild the Composer dependencies.
-  if (drush_confirm(dt('Build and install Composer dependencies?'))) {
-    // Rebuild the composer.json file.
-    if (drush_composer_manager_composer_json_rebuild()) {
-      // Run the Composer installation.
+  drush_composer_manager_write_if_changed();
+}
+
+/**
+ * Drush hook; Called after a project is disabled.
+ *
+ * @see drush_composer_manager_write_if_changed()
+ */
+function drush_composer_manager_post_pm_disable() {
+  drush_composer_manager_write_if_changed();
+}
+
+/**
+ * If one or more extensions being acted on contain a composer.json file, prompt
+ * the user to automatically run Composer's update command.
+ *
+ * @see composer_manager_write_if_changed()
+ * @see drush_composer_manager_post_pm_enable()
+ * @see drush_composer_manager_post_pm_disable()
+ */
+function drush_composer_manager_write_if_changed() {
+  $changed = &drupal_static('composer_manager_write_if_changed', FALSE);
+  if (variable_get('composer_manager_autobuild_packages', 1) && $changed) {
+    drush_print('One or more extensions have dependencies managed by Composer.');
+    if (drush_confirm(dt('Update packages managed by Composer?'))) {
       drush_composer_manager('update');
     }
   }

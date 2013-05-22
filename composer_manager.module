@@ -61,14 +61,19 @@ function composer_manager_modules_disabled($modules) {
  * has a composer.json file.
  *
  * This is a primitive check to ensure that the composer.json file is built only
- * when it has changes.
+ * when it has changes. This check always passes when run via the command line,
+ * as it is assumed that Drush is being used to enable or disable the the
+ * modules. A static boolean is also set flagging whether one or more modules
+ * being acted on contains a composer.json file, which is used in Drush hooks.
  *
  * @param array $modules
  *   The enabled / disabled modules being scanned for a composer.json file.
  */
 function composer_manager_write_if_changed(array $modules) {
-  if (variable_get('composer_manager_autobuild_file', 1)) {
+  $changed = &drupal_static(__FUNCTION__, FALSE);
+  if (variable_get('composer_manager_autobuild_file', 1) || drupal_is_cli()) {
     if (composer_manager_has_composer_file($modules)) {
+      $changed = TRUE;
       composer_manager_write_file();
     }
   }

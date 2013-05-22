@@ -29,10 +29,17 @@ function composer_manager_settings_form($form, &$form_state) {
   );
 
   $form['composer_manager_autobuild_file'] = array(
-    '#title' => 'Automatically build the consolidated composer.json file',
+    '#title' => 'Automatically build the composer.json file when enabling or disabling modules in the Drupal UI',
     '#type' => 'checkbox',
     '#default_value' => variable_get('composer_manager_autobuild_file', 1),
-    '#description' => t('Combine the requirements in all composer.json files that are included with contributed modules. Uncheck to manage a custom composer.json file in the vendor directory above.'),
+    '#description' => t('Automatically build the consolidated composer.json for all contributed modules file in the vendor directory above when modules are enabled or disabled in the Drupal UI. Disable this setting if you want to maintain the composer.json file manually.'),
+  );
+
+  $form['composer_manager_autobuild_packages'] = array(
+    '#title' => 'Automatically update Composer dependencies when enabling or disabling modules with Drush',
+    '#type' => 'checkbox',
+    '#default_value' => variable_get('composer_manager_autobuild_packages', 1),
+    '#description' => t('Automatically build the consolidated composer.json file and run Composer\'s <code>!command</code> command when enabling or disabling modules with Drush. Disable this setting to manage the composer.json and dependencies manually.', array('!command' => 'update')),
   );
 
   $form['#validate'] = array('composer_manager_settings_form_validate');
