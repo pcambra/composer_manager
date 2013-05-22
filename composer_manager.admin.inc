@@ -14,10 +14,13 @@
  */
 function composer_manager_settings_form($form, &$form_state) {
 
+  // Don't break sites that upgraded from <= 7.x-1.0-beta5.
+  composer_manager_beta5_compatibility();
+
   $form['composer_manager_vendor_dir'] = array(
     '#title' => 'Vendor Directory',
     '#type' => 'textfield',
-    '#default_value' => variable_get('composer_manager_vendor_dir', 'sites/all/libraries/composer'),
+    '#default_value' => variable_get('composer_manager_vendor_dir', 'sites/all/vendor'),
     '#description' => t('The relative or absolute path to the vendor directory containing the Composer packages and autoload.php file.'),
   );
 

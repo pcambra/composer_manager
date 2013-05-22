@@ -8,6 +8,14 @@
 /**
  * Implements hook_uninstall().
  */
+function composer_manager_install() {
+  // @see composer_manager_beta5_compatibility()
+  variable_set('composer_manager_vendor_dir', 'sites/all/vendor');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
 function composer_manager_uninstall() {
   variable_del('composer_manager_vendor_dir');
   variable_del('composer_manager_autobuild_file');
