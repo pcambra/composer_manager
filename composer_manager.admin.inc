@@ -217,7 +217,7 @@ function composer_manager_rebuild_form($form, &$form_state) {
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Rebuild composer.json file'),
-    '#disabled' => !is_dir($file_dir) || !is_writable($file_dir),
+    '#disabled' => 0 !== strpos($file_dir, 'public://') && (!is_dir($file_dir) || !is_writable($file_dir)),
   );
 
   $form['#submit'] = array('composer_manager_rebuild_form_submit');
