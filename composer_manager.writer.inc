@@ -62,10 +62,11 @@ function composer_manager_build_json(array $data) {
     }
 
     if (!$combined) {
-      $combined = array(
-        'require' => array(),
-        'config' => array('vendor-dir' => composer_manager_relative_vendor_dir()),
-      );
+      $combined = array('require' => array());
+      $vendor_dir = composer_manager_relative_vendor_dir();
+      if (0 !== strlen($vendor_dir) && 'vendor' != $vendor_dir) {
+        $combined['config']['vendor-dir'] = $vendor_dir;
+      }
     }
 
     // @todo Detect duplicates, maybe add an "ignore" list. Figure out if this
@@ -287,7 +288,7 @@ function composer_manager_relative_dir($dir_to, $dir_from) {
   // need to traverse from the directory containing the composer.json file, and
   // $dirs_to is relative to the common position.
   foreach ($dirs_to as $pos => $dir) {
-    if ($dirs_to[$pos] != $dirs_from[$pos]) {
+    if (!isset($dirs_from[$pos]) || $dirs_to[$pos] != $dirs_from[$pos]) {
       break;
     }
     unset($dirs_to[$pos], $dirs_from[$pos]);
