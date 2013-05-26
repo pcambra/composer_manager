@@ -28,7 +28,7 @@ function composer_manager_fetch_data() {
       throw new \RuntimeException(t('Error reading file: @file', $args));
     }
 
-    if (!$json = @drupal_json_decode($filedata)) {
+    if (!$json = @json_decode($filedata, TRUE)) {
       throw new \UnexpectedValueException(t('Expecting contents of file to be valid JSON: @file', $args));
     }
 
@@ -169,8 +169,8 @@ function composer_manager_put_file($dir_uri, array $json) {
   // Displays a message to admins that a file was written.
   if (user_access('administer site configuration')) {
     $command = file_exists($dir_uri . '/composer.lock') ? 'update' : 'install';
-    drupal_set_message(t('A composer.json file was written to @path.', array('@path' => drupal_realpath($dir_uri))));
-    if ('admin/config/system/composer-manager' != current_path()) {
+    drupal_set_message(t('A composer.json file was written to @path.', array('@path' => realpath($dir_uri))));
+    if ('admin/settings/composer-manager' != $_GET['q']) {
       $args = array('!command' => $command, '@url' => url('http://drupal.org/project/composer_manager', array('absolute' => TRUE)));
       if ('install' == $command) {
         $message = t('Composer\'s <code>!command</code> command must be run to generate the autoloader and install the required packages.<br/>Refer to the instructions on the <a href="@url" target="_blank">Composer Manager project page</a> for installing packages.', $args);
@@ -192,7 +192,7 @@ function composer_manager_put_file($dir_uri, array $json) {
  * @return bool
  */
 function composer_manager_prepare_directory($directory) {
-  if (!file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
+  if (!file_check_directory($directory, FILE_CREATE_DIRECTORY)) {
     return FALSE;
   }
   if (0 === strpos($directory, 'public://')) {
@@ -240,11 +240,11 @@ function composer_manager_compare_stability($a, $b) {
  * @throws \RuntimeException
  */
 function composer_manager_file_dir() {
-  $dir_uri = variable_get('composer_manager_file_dir', file_default_scheme() . '://composer');
+  $dir_uri = variable_get('composer_manager_file_dir', file_directory_path() . '/composer');
   if (!composer_manager_prepare_directory($dir_uri)) {
     throw new \RuntimeException(t('Error creating directory: @dir', array('@dir' => $dir_uri)));
   }
-  if (!$realpath = drupal_realpath($dir_uri)) {
+  if (!$realpath = realpath($dir_uri)) {
     throw new \RuntimeException(t('Error resolving directory: @dir', array('@dir' => $dir_uri)));
   }
   return $realpath;
@@ -259,7 +259,7 @@ function composer_manager_relative_autoload_path(&$path, $key, $module) {
   if (NULL === $dir_from) {
     $dir_from = composer_manager_file_dir();
   }
-  $dir_to = DRUPAL_ROOT . '/' . drupal_get_path('module', $module) . '/' . $path;
+  $dir_to = getcwd() . '/' . drupal_get_path('module', $module) . '/' . $path;
   $path = composer_manager_relative_dir($dir_to, $dir_from);
 }
 

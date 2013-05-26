@@ -12,7 +12,7 @@
 function composer_manager_menu() {
   $items = array();
 
-  $items['admin/config/system/composer-manager'] = array(
+  $items['admin/settings/composer-manager'] = array(
     'title' => 'Composer Manager',
     'description' => 'View the status of packages managed by Composer and configure the location of the composer.json file and verdor directory.',
     'page callback' => 'composer_manager_packages_page',
@@ -20,13 +20,13 @@ function composer_manager_menu() {
     'file' => 'composer_manager.admin.inc',
   );
 
-  $items['admin/config/system/composer-manager/packages'] = array(
+  $items['admin/settings/composer-manager/packages'] = array(
     'title' => 'Packages',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
   );
 
-  $items['admin/config/system/composer-manager/settings'] = array(
+  $items['admin/settings/composer-manager/settings'] = array(
     'title' => 'Settings',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('composer_manager_settings_form'),
@@ -70,7 +70,7 @@ function composer_manager_modules_disabled($modules) {
  *   The enabled / disabled modules being scanned for a composer.json file.
  */
 function composer_manager_write_if_changed(array $modules) {
-  $changed = &drupal_static(__FUNCTION__, FALSE);
+  $changed = &ctools_static(__FUNCTION__, FALSE);
   if (variable_get('composer_manager_autobuild_file', 1) || drupal_is_cli()) {
     if (composer_manager_has_composer_file($modules)) {
       $changed = TRUE;
@@ -133,7 +133,7 @@ function composer_manager_write_file() {
     $data = composer_manager_fetch_data();
     $json = composer_manager_build_json($data);
     if ($json) {
-      $dir_uri = variable_get('composer_manager_file_dir', file_default_scheme() . '://composer');
+      $dir_uri = variable_get('composer_manager_file_dir', file_directory_path() . '/composer');
       composer_manager_put_file($dir_uri, $json);
     }
     $success = TRUE;
@@ -156,33 +156,10 @@ function composer_manager_write_file() {
  * @return string
  */
 function composer_manager_vendor_dir() {
-  // Don't break sites that upgraded from <= 7.x-1.0-beta5.
-  composer_manager_beta5_compatibility();
-
   $vendor_dir = variable_get('composer_manager_vendor_dir', 'sites/all/vendor');
   $is_absolute = (0 === strpos($vendor_dir, '/'));
   if (!$is_absolute) {
-    $vendor_dir = DRUPAL_ROOT . '/' . $vendor_dir;
+    $vendor_dir = getcwd() . '/' . $vendor_dir;
   }
   return $vendor_dir;
-}
-
-/**
- * Ensures that sites don't break after upgrading from <= 7.x-1.0-beta5.
- *
- * In versions <= 7.x-1.0-beta5, the default vendor directory was defined as
- * "sites/all/libraries/composer'". In versions > 7.x-1.0-beta5, the default
- * vendor directory is "sites/all/vendor". This check ensures that the vendor
- * directory doesn't unexpectedly change for people who upgraded the module from
- * an earlier version and haven't changed any of the default settings.
- *
- * Composer Manager explicitly sets the "composer_manager_vendor_dir" to
- * "sites/all/vendor" during installation, so we know that the module was
- * upgraded if the variable isn't set.
- */
-function composer_manager_beta5_compatibility() {
-  if (NULL === ($default = variable_get('composer_manager_vendor_dir', NULL))) {
-    // Set the variable to the old default so it doesn't change unexpectedly.
-    variable_set('composer_manager_vendor_dir', 'sites/all/libraries/composer');
-  }
 }

@@ -12,10 +12,7 @@
  *
  * @ingroup forms
  */
-function composer_manager_settings_form($form, &$form_state) {
-
-  // Don't break sites that upgraded from <= 7.x-1.0-beta5.
-  composer_manager_beta5_compatibility();
+function composer_manager_settings_form(&$form_state) {
 
   $form['composer_manager_vendor_dir'] = array(
     '#title' => 'Vendor Directory',
@@ -27,7 +24,7 @@ function composer_manager_settings_form($form, &$form_state) {
   $form['composer_manager_file_dir'] = array(
     '#title' => 'Composer File Directory',
     '#type' => 'textfield',
-    '#default_value' => variable_get('composer_manager_file_dir', file_default_scheme() . '://composer'),
+    '#default_value' => variable_get('composer_manager_file_dir', file_directory_path() . '/composer'),
     '#description' => t('The directory containing the composer.json file and where Composer commands are run.'),
   );
 
@@ -66,7 +63,7 @@ function composer_manager_settings_form_validate($form, &$form_state) {
  * Page callback; Shows the status of all packages required by contrib.
  */
 function composer_manager_packages_page() {
-  $build = array();
+  $output = '';
   $error = FALSE;
 
   $header = array(
@@ -138,7 +135,8 @@ function composer_manager_packages_page() {
       $requirement .= '<div class="description">';
       foreach ($required[$package_name] as $version => $module_names) {
         foreach ($module_names as $module_name) {
-          $module_info = system_get_info('module', $module_name);
+          //$module_info = system_get_info('module', $module_name);
+          $module_info = array('name' => $module_info['name']);
           $modules[] = check_plain($module_info['name']);
         }
       }
@@ -184,17 +182,11 @@ function composer_manager_packages_page() {
   }
 
   ksort($rows);
-  $build['packages'] = array(
-    '#theme' => 'table',
-    '#header' => $header,
-    '#rows' => $rows,
-    '#caption' => t('Status of Packages Managed by Composer'),
-    '#attributes' => array(
-      'class' => array('system-status-report'),
-    ),
-  );
+  $attributes = array('class' => array('system-status-report'));
+  $caption = t('Status of Packages Managed by Composer');
+  $output .= theme('table', $header, $rows, $attributes, $caption);
 
-  $build['refresh_form'] = drupal_get_form('composer_manager_rebuild_form');
+  $output .= drupal_get_form('composer_manager_rebuild_form');
 
   // Set status messages.
   require_once __DIR__ . '/composer_manager.install';
@@ -211,7 +203,7 @@ function composer_manager_packages_page() {
     drupal_set_message(t('Potentially conflicting versions of the same package are required by different modules.'), 'warning');
   }
 
-  return $build;
+  return $output;
 }
 
 /**
@@ -221,8 +213,8 @@ function composer_manager_packages_page() {
  *
  * @ingroup forms
  */
-function composer_manager_rebuild_form($form, &$form_state) {
-  $file_dir = variable_get('composer_manager_file_dir', file_default_scheme() . '://composer');
+function composer_manager_rebuild_form(&$form_state) {
+  $file_dir = variable_get('composer_manager_file_dir', file_directory_path() . '/composer');
 
   $form['submit'] = array(
     '#type' => 'submit',
@@ -251,16 +243,16 @@ function composer_manager_rebuild_form_submit($form, &$form_state) {
  * @throws \RuntimeException
  */
 function composer_manager_lockfile_load() {
-  $json = &drupal_static(__FUNCTION__);
+  $json = &ctools_static(__FUNCTION__);
   if ($json === NULL) {
-    $dir_uri = variable_get('composer_manager_file_dir', file_default_scheme() . '://composer');
+    $dir_uri = variable_get('composer_manager_file_dir', file_directory_path() . '/composer');
     $file_uri = $dir_uri . '/composer.lock';
 
     if (file_exists($file_uri)) {
       if (!$filedata = @file_get_contents($file_uri)) {
         throw new \RuntimeException(t('Error reading file: @file', array('@file' => $file_uri)));
       }
-      if (!$json = drupal_json_decode($filedata)) {
+      if (!$json = json_decode($filedata, TRUE)) {
         throw new \RuntimeException(t('Error parsing file: @file', array('@file' => $file_uri)));
       }
     }
@@ -283,7 +275,7 @@ function composer_manager_lockfile_load() {
  * @throws \RuntimeException
  */
 function composer_manager_installed_packages() {
-  $installed = &drupal_static(__FUNCTION__, NULL);
+  $installed = &ctools_static(__FUNCTION__, NULL);
   if (NULL === $installed) {
     $installed = array();
 
@@ -336,7 +328,7 @@ function composer_manager_package_dependents() {
  * @return array
  */
 function composer_manager_required_packages() {
-  $required = &drupal_static(__FUNCTION__, NULL);
+  $required = &ctools_static(__FUNCTION__, NULL);
   if (NULL === $required) {
     require_once __DIR__ . '/composer_manager.writer.inc';
 
