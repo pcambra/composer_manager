@@ -1,0 +1,9 @@
+services:
+  composer_manager:
+    class: Drupal\composer_manager\ComposerManager
+    arguments: ['@config.factory']
+  composer_manager_event_subscriber:
+    class: Drupal\composer_manager\EventSubscriber\ComposerManagerSubscriber
+    tags:
+      - {name: event_subscriber}
+

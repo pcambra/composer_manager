@@ -14,9 +14,10 @@
  */
 function composer_manager_fetch_data() {
   $data = array();
-  foreach (module_list() as $module) {
+  $module_list = \Drupal::moduleHandler()->getModuleList();
+  foreach ($module_list as $module_name => $module_path) {
 
-    $module_dir = drupal_get_path('module', $module);
+    $module_dir = drupal_get_path('module', $module_name);
     $composer_file = $module_dir . '/composer.json';
     $args = array('@file' => $composer_file);
 
@@ -32,7 +33,7 @@ function composer_manager_fetch_data() {
       throw new \UnexpectedValueException(t('Expecting contents of file to be valid JSON: @file', $args));
     }
 
-    $data[$module] = $json;
+    $data[$module_name] = $json;
   }
   return $data;
 }
@@ -130,7 +131,7 @@ function composer_manager_build_json(array $data) {
     }
   }
 
-  drupal_alter('composer_json', $combined);
+  Drupal::moduleHandler()->alter('composer_json', $combined);
   return $combined;
 }
 
@@ -167,7 +168,7 @@ function composer_manager_put_file($dir_uri, array $json) {
   }
 
   // Displays a message to admins that a file was written.
-  if (user_access('administer site configuration')) {
+  //if (Drupal::currentUser()->hasPermission('administer site configuration')) {
     $command = file_exists($dir_uri . '/composer.lock') ? 'update' : 'install';
     drupal_set_message(t('A composer.json file was written to @path.', array('@path' => drupal_realpath($dir_uri))));
     if ('admin/config/system/composer-manager' != current_path()) {
@@ -180,7 +181,7 @@ function composer_manager_put_file($dir_uri, array $json) {
       }
       drupal_set_message($message, 'warning');
     }
-  }
+  //}
 }
 
 /**
@@ -196,7 +197,7 @@ function composer_manager_prepare_directory($directory) {
     return FALSE;
   }
   if (0 === strpos($directory, 'public://')) {
-    file_create_htaccess($directory, TRUE);
+    file_save_htaccess($directory, TRUE);
   }
   return TRUE;
 }
@@ -240,7 +241,7 @@ function composer_manager_compare_stability($a, $b) {
  * @throws \RuntimeException
  */
 function composer_manager_file_dir() {
-  $dir_uri = variable_get('composer_manager_file_dir', file_default_scheme() . '://composer');
+  $dir_uri = Drupal::config('composer_manager.settings')->get('file_dir');
   if (!composer_manager_prepare_directory($dir_uri)) {
     throw new \RuntimeException(t('Error creating directory: @dir', array('@dir' => $dir_uri)));
   }
