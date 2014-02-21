@@ -14,7 +14,10 @@ function composer_manager_init() {
     composer_manager_register_autoloader();
   }
   catch (\RuntimeException $e) {
-    watchdog('composer_manager', $e->getMessage(), array(), WATCHDOG_ERROR);
+    // @see https://api.drupal.org/api/drupal/includes%21bootstrap.inc/function/drupal_is_cli/7
+    if (!(!isset($_SERVER['SERVER_SOFTWARE']) && (php_sapi_name() == 'cli' || (is_numeric($_SERVER['argc']) && $_SERVER['argc'] > 0)))) {
+      watchdog('composer_manager', $e->getMessage(), array(), WATCHDOG_ERROR);
+    }
   }
 }
 
