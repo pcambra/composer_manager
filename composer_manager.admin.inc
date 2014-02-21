@@ -51,7 +51,7 @@ function composer_manager_settings_form(&$form_state) {
  * Form validation handler for composer_manager_settings_form().
  */
 function composer_manager_settings_form_validate($form, &$form_state) {
-  require_once __DIR__ . '/composer_manager.writer.inc';
+  module_load_install('composer_manager');
   $autobuild_file = $form_state['values']['composer_manager_autobuild_file'];
   $file_dir = $form_state['values']['composer_manager_file_dir'];
   if ($autobuild_file && !composer_manager_prepare_directory($file_dir)) {
@@ -135,7 +135,6 @@ function composer_manager_packages_page() {
       $requirement .= '<div class="description">';
       foreach ($required[$package_name] as $version => $module_names) {
         foreach ($module_names as $module_name) {
-          //$module_info = system_get_info('module', $module_name);
           $module_info = array('name' => $module_name);
           $modules[] = check_plain($module_name);
         }
