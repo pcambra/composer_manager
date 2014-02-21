@@ -7,6 +7,18 @@
  */
 
 /**
+ * Implements hook_init().
+ */
+function composer_manager_init() {
+  try {
+    composer_manager_register_autoloader();
+  }
+  catch (\RuntimeException $e) {
+    watchdog('composer_manager', $e->getMessage(), array(), WATCHDOG_ERROR);
+  }
+}
+
+/**
  * Implements hook_menu().
  */
 function composer_manager_menu() {
