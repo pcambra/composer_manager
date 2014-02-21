@@ -14,7 +14,9 @@ function composer_manager_init() {
     composer_manager_register_autoloader();
   }
   catch (\RuntimeException $e) {
-    watchdog_exception('composer_manager', $e);
+    if (!drupal_is_cli()) {
+      watchdog_exception('composer_manager', $e);
+    }
   }
 }
 
