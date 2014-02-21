@@ -136,8 +136,8 @@ function composer_manager_packages_page() {
       foreach ($required[$package_name] as $version => $module_names) {
         foreach ($module_names as $module_name) {
           //$module_info = system_get_info('module', $module_name);
-          $module_info = array('name' => $module_info['name']);
-          $modules[] = check_plain($module_info['name']);
+          $module_info = array('name' => $module_name);
+          $modules[] = check_plain($module_name);
         }
       }
       $requirement .= t('Required by: ') . join(', ', $modules);
