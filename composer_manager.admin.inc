@@ -81,7 +81,7 @@ function composer_manager_packages_page() {
   catch (\RuntimeException $e) {
     $error = TRUE;
     drupal_set_message(filter_xss_admin($e->getMessage()));
-    watchdog_exception('composer_manager', $e);
+    watchdog('composer_manager', $e->getMessage(), array(), WATCHDOG_ERROR);
     $combined = array();
   }
 
