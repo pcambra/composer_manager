@@ -121,7 +121,7 @@ function drush_composer_manager_post_pm_disable() {
  * @see drush_composer_manager_post_pm_disable()
  */
 function drush_composer_manager_write_if_changed() {
-  $changed = &ctools_static('composer_manager_write_if_changed', FALSE);
+  $changed = &composer_manager_static('composer_manager_write_if_changed', FALSE);
   if (variable_get('composer_manager_autobuild_packages', 1) && $changed) {
     drush_print('One or more extensions have dependencies managed by Composer.');
     if (drush_confirm(dt('Update packages managed by Composer?'))) {

@@ -242,7 +242,7 @@ function composer_manager_rebuild_form_submit($form, &$form_state) {
  * @throws \RuntimeException
  */
 function composer_manager_lockfile_load() {
-  $json = &ctools_static(__FUNCTION__);
+  $json = &composer_manager_static(__FUNCTION__);
   if ($json === NULL) {
     $dir_uri = variable_get('composer_manager_file_dir', file_directory_path() . '/composer');
     $file_uri = $dir_uri . '/composer.lock';
@@ -274,7 +274,7 @@ function composer_manager_lockfile_load() {
  * @throws \RuntimeException
  */
 function composer_manager_installed_packages() {
-  $installed = &ctools_static(__FUNCTION__, NULL);
+  $installed = &composer_manager_static(__FUNCTION__, NULL);
   if (NULL === $installed) {
     $installed = array();
 
@@ -327,7 +327,7 @@ function composer_manager_package_dependents() {
  * @return array
  */
 function composer_manager_required_packages() {
-  $required = &ctools_static(__FUNCTION__, NULL);
+  $required = &composer_manager_static(__FUNCTION__, NULL);
   if (NULL === $required) {
     require_once __DIR__ . '/composer_manager.writer.inc';
 
