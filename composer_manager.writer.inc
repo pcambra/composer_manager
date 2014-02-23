@@ -55,12 +55,6 @@ function composer_manager_build_json(array $data) {
   $combined = array();
   foreach ($data as $module => $json) {
 
-    // We will only merge the module's composer.json if it has some additional
-    // dependencies stated in "require".
-    if (!isset($json['require'])) {
-      continue;
-    }
-
     if (!$combined) {
       $combined = array('require' => array());
       $vendor_dir = composer_manager_relative_vendor_dir();
