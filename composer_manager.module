@@ -54,20 +54,29 @@ function composer_manager_menu() {
 }
 
 /**
- * Implements hook_modules_enabled().
- *
- * @see composer_manager_write_if_changed()
+ * Implements hook_form_FORM_ID_alter() for system_modules().
  */
-function composer_manager_modules_enabled($modules) {
-  composer_manager_write_if_changed($modules);
+function composer_manager_form_system_modules_alter(&$form, &$form_state) {
+  $form['#submit'][] = 'composer_manager_system_modules_submit';
+  $form['#module_list'] = module_list();
 }
 
 /**
- * Implements hook_modules_disabled().
+ * Form submission handler for system_modules().
+ *
+ * Determines what modules have been enabled or disabled and rewrites the
+ * consolidated composer.json file if one of the modules has dependencies.
  *
  * @see composer_manager_write_if_changed()
  */
-function composer_manager_modules_disabled($modules) {
+function composer_manager_system_modules_submit($form, &$form_state) {
+  $module_list = module_list();
+
+  // Get list of modules that have been enabled or disabled.
+  $enabled  = array_diff_key($module_list, $form['#module_list']);
+  $disabled = array_diff_key($form['#module_list'], $module_list);
+  $modules  = array_merge($enabled, $disabled);
+
   composer_manager_write_if_changed($modules);
 }
 

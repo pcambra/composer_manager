@@ -23,6 +23,13 @@ function composer_manager_uninstall() {
 }
 
 /**
+ * Implements hook_enable().
+ */
+function composer_manager_enable() {
+  composer_manager_write_if_changed(array('composer_manager'));
+}
+
+/**
  * Implements hook_requirements().
  */
 function composer_manager_requirements($phase) {
