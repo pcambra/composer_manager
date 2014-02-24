@@ -58,7 +58,7 @@ function composer_manager_settings_form_validate($form, &$form_state) {
   $autobuild_file = $form_state['values']['composer_manager_autobuild_file'];
   $file_dir = $form_state['values']['composer_manager_file_dir'];
   if ($autobuild_file && !composer_manager_prepare_directory($file_dir)) {
-    form_set_error('composer_manager_file_dir', t('Conposer file directory must be writable'));
+    form_set_error('composer_manager_file_dir', t('Composer file directory must be writable'));
   }
 }
 
