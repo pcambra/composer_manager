@@ -10,12 +10,31 @@
  * Implements hook_menu().
  */
 function composer_manager_menu() {
+  $items = array();
+
   $items['admin/config/system/composer-manager'] = array(
     'title' => 'Composer Manager',
     'description' => 'View the status of packages managed by Composer and configure the location of the composer.json file and verdor directory.',
     'route_name' => 'composer_manager.packages_page',
   );
+
   return $items;
+}
+
+/**
+ * Implements hook_menu_link_defaults().
+ */
+function mymodule_menu_link_defaults() {
+  $links = array();
+
+  $links['system.admin.config.system.composer_manager'] = array(
+    'link_title' => 'Composer Manager',
+    'description' => 'View the status of packages managed by Composer and configure the location of the composer.json file and verdor directory.',
+    'parent' => 'system.admin.config.system',
+    'route_name' => 'composer_manager.packages_page',
+  );
+
+  return $links;
 }
 
 /**
