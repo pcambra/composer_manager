@@ -54,7 +54,7 @@ function composer_manager_settings_form($form, &$form_state) {
  * Form validation handler for composer_manager_settings_form().
  */
 function composer_manager_settings_form_validate($form, &$form_state) {
-  require_once __DIR__ . '/composer_manager.writer.inc';
+  module_load_include('inc', 'composer_manager', 'composer_manager.writer');
   $autobuild_file = $form_state['values']['composer_manager_autobuild_file'];
   $file_dir = $form_state['values']['composer_manager_file_dir'];
   if ($autobuild_file && !composer_manager_prepare_directory($file_dir)) {
