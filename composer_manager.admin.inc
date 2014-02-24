@@ -51,7 +51,7 @@ function composer_manager_settings_form(&$form_state) {
  * Form validation handler for composer_manager_settings_form().
  */
 function composer_manager_settings_form_validate($form, &$form_state) {
-  module_load_install('composer_manager');
+  module_load_include('inc', 'composer_manager', 'composer_manager.writer');
   $autobuild_file = $form_state['values']['composer_manager_autobuild_file'];
   $file_dir = $form_state['values']['composer_manager_file_dir'];
   if ($autobuild_file && !composer_manager_prepare_directory($file_dir)) {
@@ -188,7 +188,7 @@ function composer_manager_packages_page() {
   $output .= drupal_get_form('composer_manager_rebuild_form');
 
   // Set status messages.
-  require_once __DIR__ . '/composer_manager.install';
+  module_load_install('composer_manager');
   $requirements = module_invoke('composer_manager', 'requirements', 'runtime');
 
   if (REQUIREMENT_OK != $requirements['composer_manager']['severity']) {
