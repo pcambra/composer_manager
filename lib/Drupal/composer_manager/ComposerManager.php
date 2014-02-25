@@ -79,7 +79,6 @@ class ComposerManager {
   public function loadLockFile() {
     if (!isset($this->lockFile)) {
 
-      $this->lockFile = array();
       $filepath = $this->config->get('file_dir') . '/composer.lock';
 
       if (file_exists($filepath)) {
@@ -89,6 +88,9 @@ class ComposerManager {
         if (!$this->lockFile = Json::decode($filedata)) {
           throw new \RuntimeException(t('Error parsing file: @filepath', array('@filepath' => $filepath)));
         }
+      }
+      else {
+        $this->lockFile = array();
       }
 
       if (!isset($this->lockFile['packages'])) {
