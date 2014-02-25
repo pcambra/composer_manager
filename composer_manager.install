@@ -55,7 +55,7 @@ function composer_manager_requirements($phase) {
   else {
     $requirements['composer_manager']['value'] = t('Dependencies installed');
     $requirements['composer_manager']['description'] =  t('Visit the <a href="@url">package status page</a> to view the status of individual packages.', array('@url' => url('admin/config/system/composer-manager')));
-    $requirements['composer_manager']['severity'] = REQUIREMENT_OK;
+    $requirements['composer_manager']['severity'] = REQUIREMENT_INFO;
   }
 
   return $requirements;
