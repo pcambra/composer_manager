@@ -67,9 +67,9 @@ function composer_manager_packages_page() {
   $error = FALSE;
 
   $header = array(
-    'package' => t('Package'),
-    'version' => t('Installed Version'),
-    'requirement' => t('Version Required by Module'),
+    t('Package'),
+    t('Installed Version'),
+    t('Version Required by Module'),
   );
 
   try {
@@ -161,13 +161,13 @@ function composer_manager_packages_page() {
 
     // Set the row status.
     if (!$is_installed) {
-      $class = array('error');
+      $class = 'error';
     }
     elseif ($has_conflict || $not_required) {
-      $class = array('warning');
+      $class = 'warning';
     }
     else {
-      $class = array('ok');
+      $class = 'ok';
     }
 
     $rows[$package_name] = array(
@@ -181,7 +181,7 @@ function composer_manager_packages_page() {
   }
 
   ksort($rows);
-  $attributes = array('class' => array('system-status-report'));
+  $attributes = array('class' => 'system-status-report');
   $caption = t('Status of Packages Managed by Composer');
   $output .= theme('table', $header, $rows, $attributes, $caption);
 
