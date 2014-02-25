@@ -4,4 +4,4 @@ package: Other
 core: '8.x'
 type: module
 
-configure: admin/config/system/composer-manager
+configure: 'composer_manager.settings'
