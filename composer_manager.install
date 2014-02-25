@@ -69,9 +69,11 @@ function composer_manager_requirements($phase) {
 function composer_manager_packages_to_install() {
   $packages = array();
 
-  require_once __DIR__ . '/composer_manager.admin.inc';
-  $required = composer_manager_required_packages();
-  $installed = composer_manager_installed_packages();
+  /* @var $manager Drupal\composer_manager\ComposerManager */
+  $manager = \Drupal::service('composer_manager.manager');
+
+  $required = $manager->getRequiredPackages();
+  $installed = $manager->getInstalledPackages();
   $combined = array_unique(array_merge(array_keys($required), array_keys($installed)));
 
   foreach ($combined as $package_name) {
