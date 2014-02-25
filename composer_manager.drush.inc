@@ -61,13 +61,13 @@ function drush_composer_manager($command = 'install') {
   if (!drush_is_command('composer')) {
     // Ask the user would like to install Drush Composer.
     if (!drush_confirm(dt('Download and install the Drush Composer extension?'))) {
-      drush_print(dt('Drush Composer installation aborted.'));
+      drush_print(dt('Installation of the Drush Composer extension was aborted.'));
       return TRUE;
     }
 
     // Download the Drush extension.
     if (drush_invoke('dl', array('composer-8.x-1.x')) === FALSE) {
-      return drush_set_error(dt('Failed installing Drush Composer. Install manually by visiting http://drupal.org/project/composer .'));
+      return drush_set_error(dt('Failed installing the Drush Composer extension. Install it manually by following the instructions on the project page: http://drupal.org/project/composer'));
     }
 
     // Clear the caches by reloading the available command files.
