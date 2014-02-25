@@ -14,6 +14,7 @@ use Drupal\Core\Config\ConfigFactory;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\composer_manager\ComposerManager;
 
 /**
  * Provides a controller for display the list of composer packages.
@@ -36,16 +37,25 @@ class Packages implements ContainerInjectionInterface {
   protected $configFactory;
 
   /**
+   * composer_manager.manager service
+   * @var  \Drupal\composer_manager\ComposerManager
+   */
+  protected $cm;
+
+  /**
    * Constructs a \Drupal\composer_manager\Controller\Packages object.
    *
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   The module handler.
    * @param \Drupal\Core\Config\ConfigFactory $config_factory
    *   The config factory.
+   * @param \Drupal\composer_manager\ComposerManager $cm
+   *   The composer_manager service
    */
-  public function __construct(ModuleHandlerInterface $module_handler, ConfigFactory $config_factory) {
+  public function __construct(ModuleHandlerInterface $module_handler, ConfigFactory $config_factory, ComposerManager $cm) {
     $this->moduleHandler = $module_handler;
     $this->configFactory = $config_factory;
+    $this->cm = $cm;
   }
 
   /**
@@ -54,7 +64,8 @@ class Packages implements ContainerInjectionInterface {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('module_handler'),
-      $container->get('config.factory')
+      $container->get('config.factory'),
+      $container->get('composer_manager.manager')
     );
   }
 
@@ -74,12 +85,10 @@ class Packages implements ContainerInjectionInterface {
       'requirement' => t('Version Required by Module'),
     );
 
-    $this->moduleHandler->loadInclude('composer_manager', 'admin.inc');
-
     try {
-      $required = composer_manager_required_packages();
-      $installed = composer_manager_installed_packages();
-      $dependents = composer_manager_package_dependents();
+      $required = $this->cm->getRequiredPackages();
+      $installed = $this->cm->getInstalledPackages();
+      $dependents = $this->cm->getPackageDependencies();
       $combined = array_unique(array_merge(array_keys($required), array_keys($installed)));
     }
     catch (\RuntimeException $e) {
