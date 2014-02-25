@@ -16,12 +16,35 @@ use Drupal\Core\Config\ConfigFactory;
  */
 class ComposerManager {
 
+  const REGEX_PACKAGE = '@^[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9][A-Za-z0-9_.-]+$@';
+
   /**
    * The composer_manager.settings config object.
    *
    * @var \Drupal\Core\Config\Config
    */
   protected $config;
+
+  /**
+   * The contents of the composer.lock file in the composer dir.
+   *
+   * @var array
+   */
+  private $lockFile;
+
+  /**
+   * The installed package versions from the composer.lock file.
+   *
+   * @var array
+   */
+  private $installedPackages;
+
+  /**
+   * Package requirement information.
+   *
+   * @var array
+   */
+  private $requiredPackages;
 
   /**
    * Constructs a \Drupal\composer_manager\ComposerManager object.
@@ -34,6 +57,17 @@ class ComposerManager {
   }
 
   /**
+   * Returns TRUE if that passed name is a package.
+   *
+   * @param string $name
+   *
+   * @return bool
+   */
+  public function isPackage($name) {
+    return preg_match(self::REGEX_PACKAGE, $name);
+  }
+
+  /**
    * Loads the composer.lock file if it exists.
    *
    * @return array
@@ -43,33 +77,41 @@ class ComposerManager {
    *   Thrown when the file could not be read/parsed.
    */
   public function loadLockFile() {
-    // @todo Do we actually need static caching
-    // @todo If needed convert it to a member variable on the class.
-    $json = &drupal_static(__FUNCTION__);
-    if ($json === NULL) {
-      $dir_uri = $this->config->get('file_dir');
-      $file_uri = $dir_uri . '/composer.lock';
+    if (!isset($this->lockFile)) {
 
-      if (file_exists($file_uri)) {
-        if (!$filedata = @file_get_contents($file_uri)) {
-          throw new \RuntimeException(t('Error reading file: @file', array('@file' => $file_uri)));
+      $this->lockFile = array();
+      $filepath = $this->config->get('file_dir') . '/composer.lock';
+
+      if (file_exists($filepath)) {
+        if (!$filedata = @file_get_contents($filepath)) {
+          throw new \RuntimeException(t('Error reading file: @filepath', array('@filepath' => $filepath)));
         }
-        if (!$json = Json::decode($filedata)) {
-          throw new \RuntimeException(t('Error parsing file: @file', array('@file' => $file_uri)));
+        if (!$this->lockFile = Json::decode($filedata)) {
+          throw new \RuntimeException(t('Error parsing file: @filepath', array('@filepath' => $filepath)));
         }
       }
-      else {
-        $json =  array();
+
+      if (!isset($this->lockFile['packages'])) {
+        $this->lockFile['packages'] = array();
       }
+
     }
-    return $json;
+
+    return $this->lockFile;
+  }
+
+  /**
+   * Unsets the property that stores the contents of the composer.lock file.
+   */
+  public function resetLockFile() {
+    unset($this->lockFile);
   }
 
   /**
    * Reads installed package versions from the composer.lock file.
    *
    * NOTE: Tried using `composer show -i`, but it didn't return the versions or
-   * descriptions for some strange reason even though it does on the command line.
+   * descriptions for some reason even though it does on the command line.
    *
    * @return array
    *   An associative array of package version information.
@@ -77,27 +119,31 @@ class ComposerManager {
    * @throws \RuntimeException
    */
   public function getInstalledPackages() {
-    // @todo Do we actually need static caching
-    // @todo If needed convert it to a member variable on the class.
-    $installed = &drupal_static(__FUNCTION__, NULL);
-    if (NULL === $installed) {
-      $installed = array();
+    if (!isset($this->installedPackages)) {
 
-      $json = $this->loadLockFile();
-      if (isset($json['packages'])) {
-        foreach ($json['packages'] as $package) {
-          $installed[$package['name']] = array(
-            'version' => $package['version'],
-            'description' => !empty($package['description']) ? $package['description'] : '',
-            'homepage' => !empty($package['homepage']) ? $package['homepage'] : '',
-          );
-        }
+      $this->installedPackages = array();
+      $lock_file = $this->loadLockFile();
+
+      foreach ($lock_file['packages'] as $package) {
+        $this->installedPackages[$package['name']] = array(
+          'version' => $package['version'],
+          'description' => !empty($package['description']) ? $package['description'] : '',
+          'homepage' => !empty($package['homepage']) ? $package['homepage'] : '',
+        );
       }
 
-      ksort($installed);
+      ksort($this->installedPackages);
     }
 
-    return $installed;
+    return $this->installedPackages;
+  }
+
+  /**
+   * Unsets the property that stores the installed packages read from the
+   * composer.lock file.
+   */
+  public function resetInstalledPackages() {
+    unset($this->installedPackages);
   }
 
   /**
@@ -111,13 +157,13 @@ class ComposerManager {
   public function getPackageDependencies() {
     $dependents = array();
 
-    $json = $this->loadLockFile();
-    if (isset($json['packages'])) {
-      foreach ($json['packages'] as $package) {
-        if (!empty($package['require'])) {
-          foreach ($package['require'] as $dependent => $version) {
-            $dependents[$dependent][] = $package['name'];
-          }
+    $lock_file = $this->loadLockFile();
+    $lock_file += array('packages' => array());
+
+    foreach ($lock_file['packages'] as $package) {
+      if (!empty($package['require'])) {
+        foreach ($package['require'] as $dependent => $version) {
+          $dependents[$dependent][] = $package['name'];
         }
       }
     }
@@ -132,31 +178,36 @@ class ComposerManager {
    * @return array
    */
   public function getRequiredPackages() {
-    $required = &drupal_static(__FUNCTION__, NULL);
-    if (NULL === $required) {
+    if (!isset($this->requiredPackages)) {
+
+      $this->requiredPackages = array();
       \Drupal::moduleHandler()->loadInclude('composer_manager', 'writer.inc');
 
       // Gathers package versions.
-      $required = array();
       $data = composer_manager_fetch_data();
       foreach ($data as $module => $json) {
-        if (isset($json['require'])) {
-          foreach ($json['require'] as $package => $version) {
-            $pattern = '@^[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9][A-Za-z0-9_.-]+$@';
-            if (preg_match($pattern, $package)) {
-              if (!isset($required[$package])) {
-                $required[$package][$version] = array();
-              }
-              $required[$package][$version][] = $module;
+        $json += array('require' => array());
+        foreach ($json['require'] as $package => $version) {
+          if ($this->isPackage($package)) {
+            if (!isset($this->requiredPackages[$package])) {
+              $this->requiredPackages[$package][$version] = array();
             }
+            $this->requiredPackages[$package][$version][] = $module;
           }
         }
       }
 
-      ksort($required);
+      ksort($this->requiredPackages);
     }
 
-    return $required;
+    return $this->requiredPackages;
+  }
+
+  /**
+   * Unsets the property that stores package requirement information.
+   */
+  public function resetRequiredPackages() {
+    unset($this->requiredPackages);
   }
 
 }
