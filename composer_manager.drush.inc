@@ -60,7 +60,7 @@ function drush_composer_manager($command = 'install') {
   // Check if Drush Composer is available.
   if (!drush_is_command('composer')) {
     // Ask the user would like to install Drush Composer.
-    if (!drush_confirm(dt('Download and install Drush Composer extension?'))) {
+    if (!drush_confirm(dt('Download and install the Drush Composer extension?'))) {
       drush_print(dt('Drush Composer installation aborted.'));
       return TRUE;
     }
