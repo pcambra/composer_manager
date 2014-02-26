@@ -1,9 +1,9 @@
 composer_manager.packages_page:
   route_name: composer_manager.packages_page
   base_route: composer_manager.packages_page
-  title: 'Composer Manager'
+  title: 'Packages'
 
 composer_manager.settings:
   route_name: composer_manager.settings
   base_route: composer_manager.packages_page
-  title: 'Composer Manager Setting'
+  title: 'Settings'

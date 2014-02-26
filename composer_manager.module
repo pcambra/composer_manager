@@ -73,7 +73,7 @@ function composer_manager_write_if_changed(array $modules) {
   if (Drupal::config('composer_manager.settings')->get('autobuild_file') || drupal_is_cli()) {
     if (composer_manager_has_composer_file($modules)) {
       $changed = TRUE;
-      composer_manager_write_file();
+      Drupal::service('composer_manager.packages')->writeComposerJson();
     }
   }
 }
@@ -95,72 +95,3 @@ function composer_manager_has_composer_file(array $modules) {
   }
   return FALSE;
 }
-
-/**
- * Registers the autoloader for all third-party packages.
- */
-function composer_manager_register_autoloader() {
-  static $registered = FALSE;
-  if (!$registered) {
-    $autoloader = composer_manager_vendor_dir() . '/autoload.php';
-    if (!file_exists($autoloader)) {
-      $message = t('Autoloader not found: @file', array('@file' => $autoloader));
-      throw new \RuntimeException($message);
-    }
-    $registered = TRUE;
-    require $autoloader;
-  }
-}
-
-/**
- * Writes the consolidated composer.json file for all modules that require
- * third-party packages managed by Composer.
- *
- * @return bool
- */
-function composer_manager_write_file() {
-  // Ensure only one process runs at a time. 10 seconds is more than enough.
-  // It is rare that a conflict will happen, and it isn't mission critical that
-  // we wait for the lock to release and regenerate the file again.
-  if (!Drupal::lock()->acquire(__FUNCTION__, 10)) {
-    return FALSE;
-  }
-
-  require_once __DIR__ . '/composer_manager.writer.inc';
-
-  try {
-    $data = composer_manager_fetch_data();
-    $json = composer_manager_build_json($data);
-    if ($json) {
-      $dir_uri = Drupal::config('composer_manager.settings')->get('file_dir');
-      composer_manager_put_file($dir_uri, $json);
-    }
-    $success = TRUE;
-  }
-  catch (\RuntimeException $e) {
-    $success = FALSE;
-    if (Drupal::currentUser()->hasPermission('administer site configuration')) {
-      drupal_set_message(t('Error writing composer.json file'), 'error');
-    }
-    watchdog_exception('composer_manager', $e);
-  }
-
-  Drupal::lock()->release(__FUNCTION__);
-  return $success;
-}
-
-/**
- * Returns the path to the vendor directory.
- *
- * @return string
- */
-function composer_manager_vendor_dir() {
-
-  $vendor_dir = Drupal::config('composer_manager.settings')->get('vendor_dir');
-  $is_absolute = (0 === strpos($vendor_dir, '/'));
-  if (!$is_absolute) {
-    $vendor_dir = DRUPAL_ROOT . '/' . $vendor_dir;
-  }
-  return $vendor_dir;
-}
-

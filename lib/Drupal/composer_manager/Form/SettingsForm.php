@@ -13,6 +13,7 @@ use Drupal\Core\Form\FormInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\composer_manager\FilesystemInterface;
 
 /**
  * Provides administrative settings for the Composer Manager module.
@@ -22,26 +23,26 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 class SettingsForm extends ConfigFormBase implements FormInterface, ContainerInjectionInterface {
 
   /**
-   * The module handler.
-   *
    * @var \Drupal\Core\Extension\ModuleHandlerInterface
    */
   protected $moduleHandler;
 
   /**
+   * @var \Drupal\composer_manager\FilesystemInterface
+   */
+  protected $filesystem;
+
+  /**
    * Constructs a \Drupal\composer_manager\SettingsForm object.
    *
    * @param \Drupal\Core\Config\ConfigFactory $config_factory
-   *   The factory for configuration objects.
-   * @param \Drupal\Core\Config\Context\ContextInterface $context
-   *   The configuration context to use.
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
-   *   The module handler.
+   * @param \Drupal\composer_manager\FilesystemInterface $filesystem
    */
-  public function __construct(ConfigFactory $config_factory, ModuleHandlerInterface $module_handler) {
+  public function __construct(ConfigFactory $config_factory, ModuleHandlerInterface $module_handler, FilesystemInterface $filesystem) {
     parent::__construct($config_factory);
-
     $this->moduleHandler = $module_handler;
+    $this->filesystem = $filesystem;
   }
 
   /**
@@ -50,7 +51,8 @@ class SettingsForm extends ConfigFormBase implements FormInterface, ContainerInj
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('config.factory'),
-      $container->get('module_handler')
+      $container->get('module_handler'),
+      $container->get('composer_manager.filesystem')
     );
   }
 
@@ -109,7 +111,7 @@ class SettingsForm extends ConfigFormBase implements FormInterface, ContainerInj
 
     $autobuild_file = $form_state['values']['composer_manager_autobuild_file'];
     $file_dir = $form_state['values']['composer_manager_file_dir'];
-    if ($autobuild_file && !composer_manager_prepare_directory($file_dir)) {
+    if ($autobuild_file && !$this->filesystem->prepareDirectory($file_dir)) {
       \Drupal::formBuilder()->setErrorByName('composer_manager_file_dir',t('Composer file directory must be writable'));
     }
   }
@@ -117,10 +119,10 @@ class SettingsForm extends ConfigFormBase implements FormInterface, ContainerInj
   public function submitForm(array &$form, array &$form_state) {
     parent::submitForm($form, $form_state);
     $this->configFactory->get('composer_manager.settings')
-      ->set('vendor_dir',$form_state['values']['composer_manager_vendor_dir'])
-      ->set('file_dir',$form_state['values']['composer_manager_file_dir'])
-      ->set('autobuild_file',$form_state['values']['composer_manager_autobuild_file'])
-      ->set('autobuild_packages',$form_state['values']['composer_manager_autobuild_packages'])
+      ->set('vendor_dir', $form_state['values']['composer_manager_vendor_dir'])
+      ->set('file_dir', $form_state['values']['composer_manager_file_dir'])
+      ->set('autobuild_file', $form_state['values']['composer_manager_autobuild_file'])
+      ->set('autobuild_packages', $form_state['values']['composer_manager_autobuild_packages'])
     ->save();
   }
 

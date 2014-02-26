@@ -28,6 +28,8 @@ class RebuildForm implements FormInterface, ContainerInjectionInterface {
 
   /**
    * Constructs a \Drupal\composer_manager\Form\RebuildForm object.
+   *
+   * @param \Drupal\Core\Config\ConfigFactory $config_factory
    */
   public function __construct(ConfigFactory $config_factory) {
     $this->config = $config_factory->get('composer_manager.settings');
@@ -74,7 +76,14 @@ class RebuildForm implements FormInterface, ContainerInjectionInterface {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, array &$form_state) {
-    composer_manager_write_file();
+    try {
+      \Drupal::service('composer_manager.packages')->writeComposerJson();
+    } catch (\Exception $e) {
+      if (\Drupal::currentUser()->hasPermission('administer site configuration')) {
+        drupal_set_message(t('Error writing composer.json file'), 'error');
+      }
+      watchdog_exception('composer_manager', $e);
+    }
   }
 
 }

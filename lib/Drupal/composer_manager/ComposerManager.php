@@ -7,14 +7,14 @@
 
 namespace Drupal\composer_manager;
 
-use Drupal\Component\Utility\Json;
+use Drupal\Component\Utility\String;
 use Drupal\Core\Config\ConfigFactory;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 
 /**
- * Manages composer files for contrib modules.
- * @todo Find better name.
+ * Gets configuration settings and installed / required packages.
  */
-class ComposerManager {
+class ComposerManager implements ComposerManagerInterface {
 
   const REGEX_PACKAGE = '@^[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9][A-Za-z0-9_.-]+$@';
 
@@ -26,190 +26,161 @@ class ComposerManager {
   protected $config;
 
   /**
-   * The contents of the composer.lock file in the composer dir.
-   *
-   * @var array
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface.
    */
-  private $lockFile;
+  protected $moduleHandler;
 
   /**
-   * The installed package versions from the composer.lock file.
-   *
-   * @var array
+   * @var \Drupal\composer_manager\FilesystemInterface
    */
-  private $installedPackages;
+  protected $filesystem;
 
   /**
-   * Package requirement information.
-   *
-   * @var array
+   * @var bool
    */
-  private $requiredPackages;
+  protected $autoloaderRegistered = false;
 
   /**
    * Constructs a \Drupal\composer_manager\ComposerManager object.
    *
    * @param \Drupal\Core\Config\ConfigFactory $config_factory
-   *   The config factory.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   * @param \Drupal\composer_manager\FilesystemInterface $filesystem
    */
-  public function __construct(ConfigFactory $config_factory) {
+  public function __construct(ConfigFactory $config_factory, ModuleHandlerInterface $module_handler, FilesystemInterface $filesystem) {
     $this->config = $config_factory->get('composer_manager.settings');
+    $this->moduleHandler = $module_handler;
+    $this->filesystem = $filesystem;
   }
 
   /**
-   * Returns TRUE if that passed name is a package.
+   * Returns TRUE if the passed name is a valid Composer package name.
    *
-   * @param string $name
+   * @param string $package_name
    *
    * @return bool
    */
-  public function isPackage($name) {
-    return preg_match(self::REGEX_PACKAGE, $name);
+  public function isValidPackageName($package_name) {
+    return preg_match(self::REGEX_PACKAGE, $package_name);
   }
 
   /**
-   * Loads the composer.lock file if it exists.
+   * Compares the passed minimum stability requirements.
    *
-   * @return array
-   *   The parsed JSON, and empty array if the file doesn't exist.
+   * @return int
+   *   Returns -1 if the first version is lower than the second, 0 if they are
+   *   equal, and 1 if the second is lower.
    *
-   * @throws \RuntimeException
-   *   Thrown when the file could not be read/parsed.
+   * @throws \UnexpectedValueException
    */
-  public function loadLockFile() {
-    if (!isset($this->lockFile)) {
+  public function compareStability($a, $b) {
+    $number = array(
+      'dev' => 0,
+      'alpha' => 1,
+      'beta' => 2,
+      'RC' => 3,
+      'rc' => 3,
+      'stable' => 4,
+    );
 
-      $filepath = $this->config->get('file_dir') . '/composer.lock';
-
-      if (file_exists($filepath)) {
-        if (!$filedata = @file_get_contents($filepath)) {
-          throw new \RuntimeException(t('Error reading file: @filepath', array('@filepath' => $filepath)));
-        }
-        if (!$this->lockFile = Json::decode($filedata)) {
-          throw new \RuntimeException(t('Error parsing file: @filepath', array('@filepath' => $filepath)));
-        }
-      }
-      else {
-        $this->lockFile = array();
-      }
-
-      if (!isset($this->lockFile['packages'])) {
-        $this->lockFile['packages'] = array();
-      }
-
+    if (!isset($number[$a]) || !isset($number[$b])) {
+      throw new \UnexpectedValueException('Unexpected value for "minimum-stability"');
     }
 
-    return $this->lockFile;
+    if ($number[$a] == $number[$b]) {
+      return 0;
+    }
+    else {
+      return $number[$a] < $number[$b] ? -1 : 1;
+    }
   }
 
   /**
-   * Unsets the property that stores the contents of the composer.lock file.
-   */
-  public function resetLockFile() {
-    unset($this->lockFile);
-  }
-
-  /**
-   * Reads installed package versions from the composer.lock file.
+   * Prepares and returns the realpath to the Composer file directory.
    *
-   * NOTE: Tried using `composer show -i`, but it didn't return the versions or
-   * descriptions for some reason even though it does on the command line.
-   *
-   * @return array
-   *   An associative array of package version information.
+   * @return string
    *
    * @throws \RuntimeException
    */
-  public function getInstalledPackages() {
-    if (!isset($this->installedPackages)) {
-
-      $this->installedPackages = array();
-      $lock_file = $this->loadLockFile();
-
-      foreach ($lock_file['packages'] as $package) {
-        $this->installedPackages[$package['name']] = array(
-          'version' => $package['version'],
-          'description' => !empty($package['description']) ? $package['description'] : '',
-          'homepage' => !empty($package['homepage']) ? $package['homepage'] : '',
-        );
-      }
-
-      ksort($this->installedPackages);
+  public function getComposerFileDirectory() {
+    $directory = $this->config->get('file_dir');
+    if (!$this->filesystem->prepareDirectory($directory)) {
+      throw new \RuntimeException(String::format('Error creating directory: @directory', array('@directory' => $directory)));
     }
-
-    return $this->installedPackages;
+    if (!$realpath = drupal_realpath($directory)) {
+      throw new \RuntimeException(String::format('Error resolving directory: @directory', array('@directory' => $directory)));
+    }
+    return $realpath;
   }
 
   /**
-   * Unsets the property that stores the installed packages read from the
-   * composer.lock file.
+   * Returns the consolidated composer.json file.
+   *
+   * @return \Drupal\composer_manager\ComposerFileInterface
    */
-  public function resetInstalledPackages() {
-    unset($this->installedPackages);
+  public function getComposerJsonFile() {
+    return new ComposerFile($this->config->get('file_dir') . '/composer.json');
   }
 
   /**
-   * Returns each installed packages dependents.
+   * Returns the consolidated composer.lock file.
+   *
+   * @return \Drupal\composer_manager\ComposerFileInterface
+   */
+  public function getComposerLockFile() {
+    return new ComposerFile($this->config->get('file_dir') . '/composer.lock');
+  }
+
+  /**
+   * Reads the consolidated composer.lock file and parses in to a PHP array.
    *
    * @return array
-   *   An associative array of installed packages to their dependents.
    *
    * @throws \RuntimeException
    */
-  public function getPackageDependencies() {
-    $dependents = array();
-
-    $lock_file = $this->loadLockFile();
-    $lock_file += array('packages' => array());
-
-    foreach ($lock_file['packages'] as $package) {
-      if (!empty($package['require'])) {
-        foreach ($package['require'] as $dependent => $version) {
-          $dependents[$dependent][] = $package['name'];
-        }
-      }
-    }
-
-    return $dependents;
+  public function readComposerLockFile() {
+    $lock_file = $this->getComposerLockFile();
+    $filedata = $lock_file->exists() ? $lock_file->read() : array();
+    return $filedata + array('packages' => array());
   }
 
   /**
-   * Returns the packages, versions, and the modules that require them in the
-   * composer.json files contained in contributed modules.
+   * Returns the absolute path to the vendor directory.
    *
-   * @return array
+   * @return string
    */
-  public function getRequiredPackages() {
-    if (!isset($this->requiredPackages)) {
-
-      $this->requiredPackages = array();
-      \Drupal::moduleHandler()->loadInclude('composer_manager', 'writer.inc');
-
-      // Gathers package versions.
-      $data = composer_manager_fetch_data();
-      foreach ($data as $module => $json) {
-        $json += array('require' => array());
-        foreach ($json['require'] as $package => $version) {
-          if ($this->isPackage($package)) {
-            if (!isset($this->requiredPackages[$package])) {
-              $this->requiredPackages[$package][$version] = array();
-            }
-            $this->requiredPackages[$package][$version][] = $module;
-          }
-        }
-      }
-
-      ksort($this->requiredPackages);
+  public function getVendorDirectory() {
+    $directory = $this->config->get('vendor_dir');
+    if (!$this->filesystem->isAbsolutePath($directory)) {
+      $directory = DRUPAL_ROOT . '/' . $directory;
     }
-
-    return $this->requiredPackages;
+    return $directory;
   }
 
   /**
-   * Unsets the property that stores package requirement information.
+   * Returns the absolute path to the autoload.php file.
+   *
+   * @return string
    */
-  public function resetRequiredPackages() {
-    unset($this->requiredPackages);
+  public function getAutoloadFilepath() {
+    return $this->getVendorDirectory() . '/autoload.php';
   }
 
+  /**
+   * Registers the autoloader.
+   *
+   * @throws \RuntimeException
+   */
+  public function registerAutolaoder() {
+    if (!$this->autoloaderRegistered) {
+
+      $filepath = $this->getAutoloadFilepath();
+      if (!file_exists($filepath)) {
+        throw new \RuntimeException(String::format('Autoloader not found: @filepath', array('@filepath' => $filepath)));
+      }
+
+      $this->autoloaderRegistered = TRUE;
+      require_once $filepath;
+    }
+  }
 }

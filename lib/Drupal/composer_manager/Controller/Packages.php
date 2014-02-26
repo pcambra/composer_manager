@@ -14,7 +14,7 @@ use Drupal\Core\Config\ConfigFactory;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\composer_manager\ComposerManager;
+use Drupal\composer_manager\ComposerPackagesInterface;
 
 /**
  * Provides a controller for display the list of composer packages.
@@ -22,40 +22,31 @@ use Drupal\composer_manager\ComposerManager;
 class Packages implements ContainerInjectionInterface {
 
   /**
-   * The module handler.
-   *
    * @var \Drupal\Core\Extension\ModuleHandlerInterface
    */
   protected $moduleHandler;
 
-
   /**
-   * The config factory.
-   *
    * @var \Drupal\Core\Config\ConfigFactory
    */
   protected $configFactory;
 
   /**
-   * composer_manager.manager service
-   * @var  \Drupal\composer_manager\ComposerManager
+   * @var \Drupal\composer_manager\ComposerPackagesInterface
    */
-  protected $cm;
+  protected $packages;
 
   /**
    * Constructs a \Drupal\composer_manager\Controller\Packages object.
    *
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
-   *   The module handler.
    * @param \Drupal\Core\Config\ConfigFactory $config_factory
-   *   The config factory.
-   * @param \Drupal\composer_manager\ComposerManager $cm
-   *   The composer_manager service
+   * @param \Drupal\composer_manager\ComposerPackagesInterface $packages
    */
-  public function __construct(ModuleHandlerInterface $module_handler, ConfigFactory $config_factory, ComposerManager $cm) {
+  public function __construct(ModuleHandlerInterface $module_handler, ConfigFactory $config_factory, ComposerPackagesInterface $packages) {
     $this->moduleHandler = $module_handler;
     $this->configFactory = $config_factory;
-    $this->cm = $cm;
+    $this->packages = $packages;
   }
 
   /**
@@ -65,7 +56,7 @@ class Packages implements ContainerInjectionInterface {
     return new static(
       $container->get('module_handler'),
       $container->get('config.factory'),
-      $container->get('composer_manager.manager')
+      $container->get('composer_manager.packages')
     );
   }
 
@@ -86,9 +77,9 @@ class Packages implements ContainerInjectionInterface {
     );
 
     try {
-      $required = $this->cm->getRequiredPackages();
-      $installed = $this->cm->getInstalledPackages();
-      $dependents = $this->cm->getPackageDependencies();
+      $required = $this->packages->getRequired();
+      $installed = $this->packages->getInstalled();
+      $dependents = $this->packages->getDependencies();
       $combined = array_unique(array_merge(array_keys($required), array_keys($installed)));
     }
     catch (\RuntimeException $e) {
@@ -107,9 +98,10 @@ class Packages implements ContainerInjectionInterface {
     foreach ($combined as $package_name) {
       $is_installed = isset($installed[$package_name]);
 
-      // If the package is installed but has no dependents and is not required by
-      // any modules, then the module that required it has most likely been
-      // disabled and the package will be uninstalled on the next Composer update.
+      // If the package is installed but has no dependents and is not required
+      // by any modules, then the module that required it has most likely been
+      // disabled and the package will be uninstalled on the next Composer
+      // update.
       $not_required = $is_installed && !isset($dependents[$package_name]) && empty($required[$package_name]);
 
       // Get the package name and description.
@@ -207,13 +199,11 @@ class Packages implements ContainerInjectionInterface {
     $rebuild_form = new RebuildForm($this->configFactory);
     $build['refresh_form'] = drupal_get_form($rebuild_form);
 
-    // Set status messages.
+    // Get requirements so we can display them on the packages page.
     $this->moduleHandler->loadInclude('composer_manager', 'install');
-
-    // @todo Create api.php entry.
     $requirements = composer_manager_requirements('runtime');
 
-    if (REQUIREMENT_OK != $requirements['composer_manager']['severity']) {
+    if (REQUIREMENT_INFO != $requirements['composer_manager']['severity']) {
       drupal_set_message($requirements['composer_manager']['description'], 'error');
     }
     elseif ($update_needed) {
