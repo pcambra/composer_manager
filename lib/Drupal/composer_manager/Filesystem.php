@@ -30,7 +30,7 @@ class Filesystem implements FilesystemInterface {
       )
       || NULL !== parse_url($filepath, PHP_URL_SCHEME)
     ) {
-        return TRUE;
+      return TRUE;
     }
 
     return FALSE;
