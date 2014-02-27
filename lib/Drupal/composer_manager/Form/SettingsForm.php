@@ -112,7 +112,7 @@ class SettingsForm extends ConfigFormBase implements FormInterface, ContainerInj
     $autobuild_file = $form_state['values']['composer_manager_autobuild_file'];
     $file_dir = $form_state['values']['composer_manager_file_dir'];
     if ($autobuild_file && !$this->filesystem->prepareDirectory($file_dir)) {
-      \Drupal::formBuilder()->setErrorByName('composer_manager_file_dir',t('Composer file directory must be writable'));
+      \Drupal::formBuilder()->setErrorByName('composer_manager_file_dir', $form_state, t('Composer file directory must be writable'));
     }
   }
 
