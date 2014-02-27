@@ -167,6 +167,17 @@ class ComposerManager implements ComposerManagerInterface {
   }
 
   /**
+   * Returns TRUE if the Composer Manager module is configured to automatically
+   * build the consolidated composer.json file or Drupal is being run via the
+   * command line (Drush assumed).
+   *
+   * @return bool
+   */
+  public function autobuildComposerJsonFile() {
+    return drupal_is_cli() || $this->config->get('autobuild_file');
+  }
+
+  /**
    * Registers the autoloader.
    *
    * @throws \RuntimeException

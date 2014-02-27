@@ -85,7 +85,7 @@ function drush_composer_manager($command = 'install') {
  */
 function drush_composer_manager_composer_json_rebuild() {
   try {
-    Drupal::service('composer_manager.packages')->writeComposerJson();
+    Drupal::service('composer_manager.packages')->writeComposerJsonFile();
     drush_log(dt('Completed building composer.json file.'), 'ok');
     return TRUE;
   }
@@ -100,7 +100,7 @@ function drush_composer_manager_composer_json_rebuild() {
  * @see drush_composer_manager_write_if_changed()
  */
 function drush_composer_manager_post_pm_enable() {
-  drush_composer_manager_write_if_changed();
+  drush_composer_manager_update_if_changed();
 }
 
 /**
@@ -109,7 +109,7 @@ function drush_composer_manager_post_pm_enable() {
  * @see drush_composer_manager_write_if_changed()
  */
 function drush_composer_manager_post_pm_disable() {
-  drush_composer_manager_write_if_changed();
+  drush_composer_manager_update_if_changed();
 }
 
 /**
@@ -120,9 +120,10 @@ function drush_composer_manager_post_pm_disable() {
  * @see drush_composer_manager_post_pm_enable()
  * @see drush_composer_manager_post_pm_disable()
  */
-function drush_composer_manager_write_if_changed() {
-  $changed = &drupal_static('composer_manager_write_if_changed', FALSE);
-  if (Drupal::config('composer_manager.settings')->get('autobuild_packages', 1) && $changed) {
+function drush_composer_manager_update_if_changed() {
+  /* @var $packages Drupal\composer_manager\ComposerPackagesInterface */
+  $packages = Drupal::service('composer_manager.packages');
+  if ($packages->getManager()->autobuildComposerJsonFile() && $packages->composerJsonFileWritten()) {
     drush_print('One or more extensions have dependencies managed by Composer.');
     if (drush_confirm(dt('Update packages managed by Composer?'))) {
       drush_composer_manager('update');

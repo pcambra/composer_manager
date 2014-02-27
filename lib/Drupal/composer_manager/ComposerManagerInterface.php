@@ -79,6 +79,15 @@ interface ComposerManagerInterface {
   public function getAutoloadFilepath();
 
   /**
+   * Returns TRUE if the Composer Manager module is configured to automatically
+   * build the consolidated composer.json file or Drupal is being run via the
+   * command line (Drush assumed).
+   *
+   * @return bool
+   */
+  public function autobuildComposerJsonFile();
+
+  /**
    * Registers the autoloader.
    *
    * @throws \RuntimeException

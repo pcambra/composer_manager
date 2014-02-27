@@ -40,6 +40,13 @@ class ComposerPackages implements ComposerPackagesInterface {
   private $composerLockFiledata;
 
   /**
+   * Whether the composer.json file was written during this request.
+   *
+   * @var bool
+   */
+  protected $composerJsonWritten = FALSE;
+
+  /**
    * @param \Drupal\Core\Lock\LockBackendInterface $lock
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    * @param \Drupal\composer_manager\FilesystemInterface $filesystem
@@ -190,8 +197,8 @@ class ComposerPackages implements ComposerPackagesInterface {
    *
    * @throws \RuntimeException
    */
-  public function writeComposerJson() {
-    $bytes = FALSE;
+  public function writeComposerJsonFile() {
+    $bytes = $this->composerJsonWritten = FALSE;
 
     // Ensure only one process runs at a time. 10 seconds is more than enough.
     // It is rare that a conflict will happen, and it isn't mission critical
@@ -205,6 +212,7 @@ class ComposerPackages implements ComposerPackagesInterface {
       $composer_json = $this->manager->getComposerJsonFile();
       $filedata = $this->getComposerJsonFiledata();
       $bytes = $composer_json->write($this->mergeComposerJsonFiledata($filedata));
+      $this->composerJsonWritten = ($bytes !== FALSE);
 
       $this->lock->release(__FUNCTION__);
     }
@@ -214,6 +222,17 @@ class ComposerPackages implements ComposerPackagesInterface {
     }
 
     return $bytes;
+  }
+
+  /**
+   * Returns TRUE if the composer.json file was written in this request.
+   *
+   * @return bool
+   *
+   * @throws \RuntimeException
+   */
+  public function composerJsonFileWritten() {
+    return $this->composerJsonWritten;
   }
 
   /**
@@ -325,5 +344,27 @@ class ComposerPackages implements ComposerPackagesInterface {
 
     $this->moduleHandler->alter('composer_json', $merged);
     return $merged;
+  }
+
+  /**
+   * Returns TRUE if at least one passed modules has a composer.json file,
+   * which flags that the list of packages managed by Composer Manager have
+   * changed.
+   *
+   * @param array $modules
+   *   The list of modules being scanned for composer.json files, usually a list
+   *   of modules that were installed or uninstalled.
+   *
+   * @return bool
+   */
+  public function haveChanges(array $modules) {
+    foreach ($modules as $module) {
+      $filepath = drupal_get_path('module', $module) . '/composer.json';
+      $composer_json = new ComposerFile($filepath);
+      if ($composer_json->exists()) {
+        return TRUE;
+      }
+    }
+    return FALSE;
   }
 }
