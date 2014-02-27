@@ -70,7 +70,28 @@ function composer_manager_modules_uninstalled($modules) {
 function composer_manager_write_if_changed(array $modules) {
   /* @var $packages Drupal\composer_manager\ComposerPackagesInterface */
   $packages = Drupal::service('composer_manager.packages');
-  if ($packages->getManager()->autobuildComposerJsonFile() && $packages->haveChanges($modules)) {
-    $packages->writeComposerJsonFile();
+  $manager = $packages->getManager();
+
+  if ($manager->autobuildComposerJsonFile() && $packages->haveChanges($modules)) {
+    if ($packages->writeComposerJsonFile() !== FALSE) {
+
+      // Displays a message to admins that a file was written.
+      if (Drupal::currentUser()->hasPermission('administer site configuration')) {
+
+        $filepath = drupal_realpath($manager->getComposerJsonFile()->getFilepath());
+        drupal_set_message(t('A composer.json file was written to @filepath.', array('@filepath' => $filepath)));
+
+        $command = $manager->getComposerLockFile()->exists() ? 'update' : 'install';
+        $args = array('!command' => $command, '@url' => url('http://drupal.org/project/composer_manager', array('absolute' => TRUE)));
+
+        if ('install' == $command) {
+          $message = t('Composer\'s <code>!command</code> command must be run to generate the autoloader and install the required packages.<br/>Refer to the instructions on the <a href="@url" target="_blank">Composer Manager project page</a> for installing packages.', $args);
+        }
+        else {
+          $message = t('Composer\'s <code>!command</code> command must be run to install the required packages.<br/>Refer to the instructions on the <a href="@url" target="_blank">Composer Manager project page</a> for updating packages.', $args);
+        }
+        drupal_set_message($message, 'warning');
+      }
+    }
   }
 }

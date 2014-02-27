@@ -77,7 +77,14 @@ class RebuildForm implements FormInterface, ContainerInjectionInterface {
    */
   public function submitForm(array &$form, array &$form_state) {
     try {
-      \Drupal::service('composer_manager.packages')->writeComposerJsonFile();
+
+      /* @var $packages \Drupal\composer_manager\ComposerPackagesInterface */
+      $packages = \Drupal::service('composer_manager.packages');
+      $packages->writeComposerJsonFile();
+
+      $filepath = drupal_realpath($packages->getManager()->getComposerJsonFile()->getFilepath());
+      drupal_set_message(t('A composer.json file was written to @filepath.', array('@filepath' => $filepath)));
+
     } catch (\Exception $e) {
       if (\Drupal::currentUser()->hasPermission('administer site configuration')) {
         drupal_set_message(t('Error writing composer.json file'), 'error');

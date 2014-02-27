@@ -208,9 +208,9 @@ class ComposerPackages implements ComposerPackagesInterface {
     }
 
     try {
-
       $composer_json = $this->manager->getComposerJsonFile();
       $filedata = $this->getComposerJsonFiledata();
+
       $bytes = $composer_json->write($this->mergeComposerJsonFiledata($filedata));
       $this->composerJsonWritten = ($bytes !== FALSE);
 
