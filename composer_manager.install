@@ -9,8 +9,7 @@
  * Implements hook_install().
  */
 function composer_manager_install() {
-  // @see composer_manager_beta5_compatibility()
-  variable_set('composer_manager_vendor_dir', 'sites/all/vendor');
+  // Nothing to do ...
 }
 
 /**

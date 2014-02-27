@@ -170,33 +170,10 @@ function composer_manager_write_file() {
  * @return string
  */
 function composer_manager_vendor_dir() {
-  // Don't break sites that upgraded from <= 7.x-1.0-beta5.
-  composer_manager_beta5_compatibility();
-
   $vendor_dir = variable_get('composer_manager_vendor_dir', 'sites/all/vendor');
   $is_absolute = (0 === strpos($vendor_dir, '/'));
   if (!$is_absolute) {
     $vendor_dir = DRUPAL_ROOT . '/' . $vendor_dir;
   }
   return $vendor_dir;
-}
-
-/**
- * Ensures that sites don't break after upgrading from <= 7.x-1.0-beta5.
- *
- * In versions <= 7.x-1.0-beta5, the default vendor directory was defined as
- * "sites/all/libraries/composer'". In versions > 7.x-1.0-beta5, the default
- * vendor directory is "sites/all/vendor". This check ensures that the vendor
- * directory doesn't unexpectedly change for people who upgraded the module from
- * an earlier version and haven't changed any of the default settings.
- *
- * Composer Manager explicitly sets the "composer_manager_vendor_dir" to
- * "sites/all/vendor" during installation, so we know that the module was
- * upgraded if the variable isn't set.
- */
-function composer_manager_beta5_compatibility() {
-  if (NULL === ($default = variable_get('composer_manager_vendor_dir', NULL))) {
-    // Set the variable to the old default so it doesn't change unexpectedly.
-    variable_set('composer_manager_vendor_dir', 'sites/all/libraries/composer');
-  }
 }

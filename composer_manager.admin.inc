@@ -14,9 +14,6 @@
  */
 function composer_manager_settings_form($form, &$form_state) {
 
-  // Don't break sites that upgraded from <= 7.x-1.0-beta5.
-  composer_manager_beta5_compatibility();
-
   $form['composer_manager_vendor_dir'] = array(
     '#title' => 'Vendor Directory',
     '#type' => 'textfield',
