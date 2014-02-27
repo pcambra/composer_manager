@@ -38,11 +38,11 @@ function mymodule_menu_link_defaults() {
 }
 
 /**
- * Implements hook_modules_enabled().
+ * Implements hook_modules_installed().
  *
  * @see composer_manager_write_if_changed()
  */
-function composer_manager_modules_enabled($modules) {
+function composer_manager_modules_installed($modules) {
   composer_manager_write_if_changed($modules);
 }
 
