@@ -56,6 +56,15 @@ interface ComposerManagerInterface {
   public function getComposerLockFile();
 
   /**
+   * Reads the consolidated composer.lock file and parses in to a PHP array.
+   *
+   * @return array
+   *
+   * @throws \RuntimeException
+   */
+  public function readComposerLockFile();
+
+  /**
    * Returns the absolute path to the vendor directory.
    *
    * @return string
