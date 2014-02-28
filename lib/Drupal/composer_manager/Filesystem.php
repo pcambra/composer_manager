@@ -7,9 +7,6 @@
 
 namespace Drupal\composer_manager;
 
-/**
- * @see https://github.com/symfony/Filesystem
- */
 class Filesystem implements FilesystemInterface {
 
   /**
@@ -20,7 +17,8 @@ class Filesystem implements FilesystemInterface {
    *
    * @return bool
    *
-   * @see https://github.com/symfony/Filesystem/blob/master/LICENSE
+   * @see https://github.com/symfony/Filesystem
+   * @license https://github.com/symfony/Filesystem/blob/master/LICENSE
    */
   public function isAbsolutePath($filepath) {
     if (strspn($filepath, '/\\', 0, 1)
@@ -48,7 +46,8 @@ class Filesystem implements FilesystemInterface {
    * @return string
    *   Path of target relative to starting path
    *
-   * @see https://github.com/symfony/Filesystem/blob/master/LICENSE
+   * @see https://github.com/symfony/Filesystem
+   * @license https://github.com/symfony/Filesystem/blob/master/LICENSE
    */
   public function makePathRelative($end_path, $start_path) {
 

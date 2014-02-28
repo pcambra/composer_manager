@@ -40,14 +40,14 @@ interface ComposerPackagesInterface {
    *
    * @throws \RuntimeException
    */
-  function getDependencies();
+  public function getDependencies();
 
   /**
    * Returns a list of packages that need to be installed.
    *
    * @return array
    */
-  function getInstallRequired();
+  public function getInstallRequired();
 
   /**
    * Writes the consolidated composer.json file for all modules that require

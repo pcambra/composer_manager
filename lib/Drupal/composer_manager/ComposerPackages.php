@@ -139,7 +139,7 @@ class ComposerPackages implements ComposerPackagesInterface {
    *
    * @throws \RuntimeException
    */
-  function getDependencies() {
+  public function getDependencies() {
     $packages = array();
 
     $filedata = $this->getComposerLockFiledata();
@@ -159,7 +159,7 @@ class ComposerPackages implements ComposerPackagesInterface {
    *
    * @return array
    */
-  function getInstallRequired() {
+  public function getInstallRequired() {
     $packages = array();
 
     $required = $this->getRequired();
