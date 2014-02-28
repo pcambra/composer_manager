@@ -186,12 +186,14 @@ class ComposerManager implements ComposerManagerInterface {
     if (!$this->autoloaderRegistered) {
 
       $filepath = $this->getAutoloadFilepath();
-      if (!file_exists($filepath)) {
+      if (!is_file($filepath)) {
         throw new \RuntimeException(String::format('Autoloader not found: @filepath', array('@filepath' => $filepath)));
       }
 
       $this->autoloaderRegistered = TRUE;
-      require_once $filepath;
+      if ($filepath != DRUPAL_ROOT . '/core/vendor/autoload.php') {
+        require $filepath;
+      }
     }
   }
 }

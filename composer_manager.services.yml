@@ -1,4 +1,9 @@
 services:
+  composer_manager.event_subscriber:
+    class: Drupal\composer_manager\AutoloaderSubscriber
+    arguments: ['@composer_manager.manager']
+    tags:
+      - { name: event_subscriber }
 
   composer_manager.filesystem:
     class: Drupal\composer_manager\Filesystem
