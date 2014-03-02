@@ -41,6 +41,11 @@ class ComposerManager implements ComposerManagerInterface {
   protected $autoloaderRegistered = false;
 
   /**
+   * @var array
+   */
+  private $corePackages = array();
+
+  /**
    * Constructs a \Drupal\composer_manager\ComposerManager object.
    *
    * @param \Drupal\Core\Config\ConfigFactory $config_factory
@@ -164,6 +169,29 @@ class ComposerManager implements ComposerManagerInterface {
    */
   public function getAutoloadFilepath() {
     return $this->getVendorDirectory() . '/autoload.php';
+  }
+
+  /**
+   * Returns an associative array of packages included in core to version.
+   *
+   * @return \Drupal\composer_manager\ComposerFileInterface
+   */
+  public function getCorePackages() {
+    if (!$this->corePackages) {
+
+      $composer_lock = new ComposerFile(DRUPAL_ROOT . '/composer.lock');
+      $filedata = $composer_lock->read();
+
+      foreach ($filedata['packages'] as $package) {
+        $this->corePackages[$package['name']] = $package['version'];
+        if ('dev-master' == $package['version']) {
+          $this->corePackages[$package['name']] .= '#' . $package['source']['reference'];
+        }
+      }
+
+    }
+
+    return $this->corePackages;
   }
 
   /**

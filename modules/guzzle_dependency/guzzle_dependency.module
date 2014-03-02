@@ -1,0 +1,20 @@
+<?php
+
+/**
+ * Implements hook_composer_json_alter().
+ */
+function guzzle_dependency_composer_json_alter(&$json) {
+  $packages = Drupal::service('composer_manager.manager')->getCorePackages();
+  $version = $packages['guzzle/http'];
+
+  // Replace the monolithic guzzle/guzzle package.
+  $json['replace']['guzzle/guzzle'] = $version;
+
+  // Require all components that make up the guzzle/guzzle package.
+  $json['require']['guzzle/batch'] = $version;
+  $json['require']['guzzle/cache'] = $version;
+  $json['require']['guzzle/iterator'] = $version;
+  $json['require']['guzzle/log'] = $version;
+  $json['require']['guzzle/plugin'] = $version;
+  $json['require']['guzzle/service'] = $version;
+}

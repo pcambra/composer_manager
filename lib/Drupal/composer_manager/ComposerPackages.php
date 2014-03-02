@@ -274,7 +274,10 @@ class ComposerPackages implements ComposerPackagesInterface {
     foreach ($filedata as $module => $json) {
 
       if (!$merged) {
-        $merged = array('require' => array());
+        $merged = array(
+          'require' => array(),
+          'replace' => array(),
+        );
         $directory = $this->getRelativeVendorDirectory();
         if (0 !== strlen($directory) && 'vendor' != $directory) {
           $merged['config']['vendor-dir'] = $directory;
@@ -339,6 +342,22 @@ class ComposerPackages implements ComposerPackagesInterface {
         if (!isset($merged['minimum-stability']) || -1 == $this->manager->compareStability($json['minimum-stability'], $merged['minimum-stability'])) {
           $merged['minimum-stability'] = $json['minimum-stability'];
         }
+      }
+    }
+
+    // Replace all core packages if we are installing to a different vendor dir.
+    if ($this->manager->getVendorDirectory() != DRUPAL_ROOT . '/core/vendor') {
+      $merged['replace'] += $this->manager->getCorePackages();
+
+      // Replacing dev-master versions can cause dependency issues.
+      if (strpos($merged['replace']['doctrine/annotations'], 'dev-master') === 0) {
+        $merged['replace']['doctrine/annotations'] = '>=1.1.2';
+      }
+      if (strpos($merged['replace']['doctrine/common'], 'dev-master') === 0) {
+        $merged['replace']['doctrine/common'] = '>=2.4.1';
+      }
+      if (strpos($merged['replace']['symfony/yaml'], 'dev-master') === 0) {
+        $merged['replace']['symfony/yaml'] = '>=2.4.1';
       }
     }
 

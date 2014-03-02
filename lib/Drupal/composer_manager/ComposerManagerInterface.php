@@ -79,6 +79,13 @@ interface ComposerManagerInterface {
   public function getAutoloadFilepath();
 
   /**
+   * Returns an associative array of packages included in core to version.
+   *
+   * @return \Drupal\composer_manager\ComposerFileInterface
+   */
+  public function getCorePackages();
+
+  /**
    * Returns TRUE if the Composer Manager module is configured to automatically
    * build the consolidated composer.json file or Drupal is being run via the
    * command line (Drush assumed).

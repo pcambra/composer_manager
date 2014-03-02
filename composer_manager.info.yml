@@ -1,6 +1,6 @@
 name: 'Composer Manager'
 description: 'Provides consolidated management of third-party, Composer-compatible packages that are required by contributed modules.'
-package: Other
+package: 'Composer'
 core: '8.x'
 type: module
 
