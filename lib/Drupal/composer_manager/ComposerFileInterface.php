@@ -51,11 +51,4 @@ interface ComposerFileInterface {
    */
   public function write(array $filedata);
 
-  /**
-   * Returns the file path.
-   *
-   * @return string
-   */
-  public function __toString();
-
 }

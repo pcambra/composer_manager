@@ -60,6 +60,13 @@ class ComposerPackages implements ComposerPackagesInterface {
   }
 
   /**
+   * @return \Drupal\composer_manager\FilesystemInterface
+   */
+  public function getFilesystem() {
+    return $this->filesystem;
+  }
+
+  /**
    * @return \Drupal\composer_manager\ComposerManagerInterface
    */
   public function getManager() {
@@ -114,10 +121,11 @@ class ComposerPackages implements ComposerPackagesInterface {
   public function getRequired() {
     $packages = array();
 
-    $filedata = $this->getComposerJsonFiledata();
-    foreach ($filedata as $module => $json) {
-      $json += array('require' => array());
-      foreach ($json['require'] as $package_name => $version) {
+    $files = $this->getComposerJsonFiles();
+    foreach ($files as $module => $composer_json) {
+      $filedata = $composer_json->read();
+      $filedata += array('require' => array());
+      foreach ($filedata['require'] as $package_name => $version) {
         if ($this->manager->isValidPackageName($package_name)) {
           if (!isset($packages[$package_name])) {
             $packages[$package_name][$version] = array();
@@ -176,20 +184,6 @@ class ComposerPackages implements ComposerPackagesInterface {
   }
 
   /**
-   * Returns the vendor directory relative to the composer file directory.
-   *
-   * @return string
-   *
-   * @throws \RuntimeException
-   */
-  public function getRelativeVendorDirectory() {
-    return $this->filesystem->makePathRelative(
-      $this->manager->getVendorDirectory(),
-      $this->manager->getComposerFileDirectory()
-    );
-  }
-
-  /**
    * Writes the consolidated composer.json file for all modules that require
    * third-party packages managed by Composer.
    *
@@ -209,9 +203,10 @@ class ComposerPackages implements ComposerPackagesInterface {
 
     try {
       $composer_json = $this->manager->getComposerJsonFile();
-      $filedata = $this->getComposerJsonFiledata();
+      $files = $this->getComposerJsonFiles();
 
-      $bytes = $composer_json->write($this->mergeComposerJsonFiledata($filedata));
+      $filedata = (array) $this->mergeComposerJsonFiles($files);
+      $bytes = $composer_json->write($filedata);
       $this->composerJsonWritten = ($bytes !== FALSE);
 
       $this->lock->release(__FUNCTION__);
@@ -238,115 +233,64 @@ class ComposerPackages implements ComposerPackagesInterface {
   /**
    * Fetches the data in each module's composer.json file.
    *
-   * @return array
+   * @return \Drupal\composer_manager\ComposerFileInterface[]
    *
    * @throws \RuntimeException
    */
-  function getComposerJsonFiledata() {
-    $filedata = array();
+  function getComposerJsonFiles() {
+    $files = array();
 
     $module_list = $this->moduleHandler->getModuleList();
     foreach ($module_list as $module_name => $filename) {
       $filepath = drupal_get_path('module', $module_name) . '/composer.json';
       $composer_json = new ComposerFile($filepath);
       if ($composer_json->exists()) {
-        $filedata[$module_name] = $composer_json->read();
+        $files[$module_name] = $composer_json;
       }
     }
 
-    return $filedata;
+    return $files;
   }
 
   /**
    * Builds the JSON array containing the combined requirements of each module's
    * composer.json file.
    *
-   * @param array $filedata
-   *   An array of JSON arrays parsed from composer.json files.
+   * @param \Drupal\composer_manager\ComposerFileInterface[] $filedata
+   *   An array composer.json file objects keyed by module.
    *
-   * @return array
-   *   The consolidated JSON array that will be written to a compsoer.json file.
+   * @return \Drupal\composer_manager\ComposerJsonMerger
    *
    * @throws \RuntimeException
    */
-  public function mergeComposerJsonFiledata(array $filedata) {
-    $merged = array();
-    foreach ($filedata as $module => $json) {
+  public function mergeComposerJsonFiles(array $files) {
 
-      if (!$merged) {
-        $merged = array(
-          'require' => array(),
-          'replace' => array(),
-        );
-        $directory = $this->getRelativeVendorDirectory();
-        if (0 !== strlen($directory) && 'vendor' != $directory) {
-          $merged['config']['vendor-dir'] = $directory;
-        }
-      }
-
-      // @todo Detect duplicates, maybe add an "ignore" list. Figure out if this
-      // encompases all keys that should be merged.
-      $to_merge = array(
-        'require',
-        'require-dev',
-        'conflict',
-        'replace',
-        'provide',
-        'suggest',
-        'repositories',
-      );
-
-      foreach ($to_merge as $key) {
-        if (isset($json[$key])) {
-          if (isset($merged[$key]) && is_array($merged[$key])) {
-            $merged[$key] = array_merge($merged[$key], $json[$key]);
-          }
-          else {
-            $merged[$key] = $json[$key];
-          }
-        }
-      }
-
-      // Merge in the "psr-0" autoload options.
-      if (isset($json['autoload']['psr-0'])) {
-        $namespaces = (array) $json['autoload']['psr-0'];
-        foreach ($json['autoload']['psr-0'] as $namesapce => $dirs) {
-          $dirs = (array) $dirs;
-          array_walk($dirs, 'composer_manager_relative_autoload_path', $module);
-          if (!isset($merged['autoload']['psr-0'][$namesapce])) {
-            $merged['autoload']['psr-0'][$namesapce] = array();
-          }
-          $merged['autoload']['psr-0'][$namesapce] = array_merge(
-            $merged['autoload']['psr-0'][$namesapce], $dirs
-          );
-        }
-      }
-
-      // Merge in the "classmap" and "files" autoload options.
-      $autoload_options = array('classmap', 'files');
-      foreach ($autoload_options as $option) {
-        if (isset($json['autoload'][$option])) {
-          $dirs = (array) $json['autoload'][$option];
-          array_walk($dirs, 'composer_manager_relative_autoload_path', $module);
-          if (!isset($merged['autoload'][$option])) {
-            $merged['autoload'][$option] = array();
-          }
-          $merged['autoload'][$option] = array_merge(
-            $merged['autoload'][$option], $dirs
-          );
-        }
-      }
-
-      // Take the lowest stability.
-      if (isset($json['minimum-stability'])) {
-        if (!isset($merged['minimum-stability']) || -1 == $this->manager->compareStability($json['minimum-stability'], $merged['minimum-stability'])) {
-          $merged['minimum-stability'] = $json['minimum-stability'];
-        }
-      }
+    // Merges the composer.json files.
+    $merged = new ComposerJsonMerger($this);
+    foreach ($files as $module => $composer_json) {
+      $merged
+        ->mergeProperty($composer_json, 'require')
+        ->mergeProperty($composer_json, 'require-dev')
+        ->mergeProperty($composer_json, 'conflict')
+        ->mergeProperty($composer_json, 'replace')
+        ->mergeProperty($composer_json, 'provide')
+        ->mergeProperty($composer_json, 'suggest')
+        ->mergeProperty($composer_json, 'repositories')
+        ->mergeAutoload($composer_json, 'psr0', $module)
+        ->mergeAutoload($composer_json, 'psr4', $module)
+        ->mergeAutoload($composer_json, 'classmap', $module)
+        ->mergeAutoload($composer_json, 'files', $module)
+        ->mergeMinimumStability($composer_json)
+      ;
     }
 
     // Replace all core packages if we are installing to a different vendor dir.
     if ($this->manager->getVendorDirectory() != DRUPAL_ROOT . '/core/vendor') {
+
+      // Replace packages included in Drupal core.
+      if (!isset($merged['replace'])) {
+        $merged['replace'] = array();
+      }
       $merged['replace'] += $this->manager->getCorePackages();
 
       // Replacing dev-master versions can cause dependency issues.

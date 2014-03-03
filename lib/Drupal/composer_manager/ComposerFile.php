@@ -18,6 +18,11 @@ class ComposerFile implements ComposerFileInterface {
   protected $filepath;
 
   /**
+   * @var array
+   */
+  protected $filedata;
+
+  /**
    * @param string $filepath
    */
   public function __construct($filepath) {
@@ -62,13 +67,16 @@ class ComposerFile implements ComposerFileInterface {
    * @throws \RuntimeException
    */
   public function read() {
-    if (!$this->exists()) {
-      throw new \RuntimeException(t('File does not exist: @filepath', array('@filepath' => $this->filepath)));
+    if (!isset($this->filedata)) {
+      if (!$this->exists()) {
+        throw new \RuntimeException(t('File does not exist: @filepath', array('@filepath' => $this->filepath)));
+      }
+      if (!$filedata = @file_get_contents($this->filepath)) {
+        throw new \RuntimeException(t('Error reading file: @filepath', array('@filepath' => $this->filepath)));
+      }
+      $this->filedata = Json::decode($filedata);
     }
-    if (!$filedata = @file_get_contents($this->filepath)) {
-      throw new \RuntimeException(t('Error reading file: @filepath', array('@filepath' => $this->filepath)));
-    }
-    return Json::decode($filedata);
+    return $this->filedata;
   }
 
   /**
@@ -92,15 +100,6 @@ class ComposerFile implements ComposerFileInterface {
       throw new \RuntimeException(String::format('Error writing file: @filepath', array('@filepath' => $this->filepath)));
     }
     return $bytes;
-  }
-
-  /**
-   * Returns the file path.
-   *
-   * @return string
-   */
-  public function __toString() {
-    return $this->filepath;
   }
 
 }

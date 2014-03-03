@@ -38,6 +38,9 @@ class Filesystem implements FilesystemInterface {
    * Given an existing path, convert it to a path relative to a given starting
    * path.
    *
+   * NOTE: This function is modified slightly from Symfony's method to strip
+   * the trailing slash from files.
+   *
    * @param string $end_path
    *   Absolute path of target
    * @param string $startPath
@@ -78,7 +81,8 @@ class Filesystem implements FilesystemInterface {
     // Construct $end_path from traversing to the common path, then to the remaining $end_path
     $relative_path = $traverser.(strlen($end_path_remainder) > 0 ? $end_path_remainder.'/' : '');
 
-    return (strlen($relative_path) === 0) ? './' : $relative_path;
+    $relative_path = (strlen($relative_path) === 0) ? './' : $relative_path;
+    return (is_file($end_path) || pathinfo($end_path, PATHINFO_EXTENSION) == 'php') ? rtrim($relative_path, '/') : $relative_path;
   }
 
   /**

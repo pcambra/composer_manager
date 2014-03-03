@@ -70,37 +70,6 @@ class ComposerManager implements ComposerManagerInterface {
   }
 
   /**
-   * Compares the passed minimum stability requirements.
-   *
-   * @return int
-   *   Returns -1 if the first version is lower than the second, 0 if they are
-   *   equal, and 1 if the second is lower.
-   *
-   * @throws \UnexpectedValueException
-   */
-  public function compareStability($a, $b) {
-    $number = array(
-      'dev' => 0,
-      'alpha' => 1,
-      'beta' => 2,
-      'RC' => 3,
-      'rc' => 3,
-      'stable' => 4,
-    );
-
-    if (!isset($number[$a]) || !isset($number[$b])) {
-      throw new \UnexpectedValueException('Unexpected value for "minimum-stability"');
-    }
-
-    if ($number[$a] == $number[$b]) {
-      return 0;
-    }
-    else {
-      return $number[$a] < $number[$b] ? -1 : 1;
-    }
-  }
-
-  /**
    * Prepares and returns the realpath to the Composer file directory.
    *
    * @return string

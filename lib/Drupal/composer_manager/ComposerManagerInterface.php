@@ -22,17 +22,6 @@ interface ComposerManagerInterface {
   public function isValidPackageName($package_name);
 
   /**
-   * Compares the passed minimum stability requirements.
-   *
-   * @return int
-   *   Returns -1 if the first version is lower than the second, 0 if they are
-   *   equal, and 1 if the second is lower.
-   *
-   * @throws \UnexpectedValueException
-   */
-  public function compareStability($a, $b);
-
-  /**
    * Prepares and returns the realpath to the Composer file directory.
    *
    * @return string

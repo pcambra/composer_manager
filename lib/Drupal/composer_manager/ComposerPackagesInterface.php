@@ -10,6 +10,11 @@ namespace Drupal\composer_manager;
 interface ComposerPackagesInterface {
 
   /**
+   * @return \Drupal\composer_manager\FilesystemInterface
+   */
+  public function getFilesystem();
+
+  /**
    * @return \Drupal\composer_manager\ComposerManagerInterface
    */
   public function getManager();
