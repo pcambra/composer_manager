@@ -86,18 +86,20 @@ function composer_manager_build_json(array $data) {
       }
     }
 
-    // Merge in the "psr-0" autoload options.
-    if (isset($json['autoload']['psr-0'])) {
-      $namespaces = (array) $json['autoload']['psr-0'];
-      foreach ($json['autoload']['psr-0'] as $namesapce => $dirs) {
-        $dirs = (array) $dirs;
-        array_walk($dirs, 'composer_manager_relative_autoload_path', $module);
-        if (!isset($combined['autoload']['psr-0'][$namesapce])) {
-          $combined['autoload']['psr-0'][$namesapce] = array();
+    $autoload_options = array('psr-0', 'psr-4');
+    foreach ($autoload_options as $option) {
+      if (isset($json['autoload'][$option])) {
+        $namespaces = (array) $json['autoload'][$option];
+        foreach ($json['autoload'][$option] as $namesapce => $dirs) {
+          $dirs = (array) $dirs;
+          array_walk($dirs, 'composer_manager_relative_autoload_path', $module);
+          if (!isset($combined['autoload'][$option][$namesapce])) {
+            $combined['autoload'][$option][$namesapce] = array();
+          }
+          $combined['autoload'][$option][$namesapce] = array_merge(
+            $combined['autoload'][$option][$namesapce], $dirs
+          );
         }
-        $combined['autoload']['psr-0'][$namesapce] = array_merge(
-          $combined['autoload']['psr-0'][$namesapce], $dirs
-        );
       }
     }
 
