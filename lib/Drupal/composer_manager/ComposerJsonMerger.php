@@ -178,9 +178,9 @@ class ComposerJsonMerger extends \ArrayObject {
         $this['autoload'][$property] = array();
       }
 
-      // Merge strategy is dirrerent for psr0, psr4 properties than files,
+      // Merge strategy is dirrerent for psr-0, psr-4 properties than files,
       // classpath properties. If the namspace variable is not an integer then
-      // assume psr0 or psr4.
+      // assume psr-0 or psr-4.
       if (!is_int($namesapce)) {
         $this['autoload'][$property] += array($namesapce => array());
         $this['autoload'][$property][$namesapce] = array_merge($this['autoload'][$property][$namesapce], $dirs);
