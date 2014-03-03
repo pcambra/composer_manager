@@ -12,6 +12,8 @@ use Drupal\Core\Lock\LockBackendInterface;
 
 class ComposerPackages implements ComposerPackagesInterface {
 
+  const REGEX_PACKAGE = '@^[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9][A-Za-z0-9_.-]+$@';
+
   /**
    * @var \Drupal\Core\Lock\LockBackendInterface
    */
@@ -74,6 +76,17 @@ class ComposerPackages implements ComposerPackagesInterface {
   }
 
   /**
+   * Returns TRUE if the passed name is a valid Composer package name.
+   *
+   * @param string $package_name
+   *
+   * @return bool
+   */
+  public function isValidPackageName($package_name) {
+    return preg_match(self::REGEX_PACKAGE, $package_name);
+  }
+
+  /**
    * Returns the composer.lock file data parsed as a PHP array.
    *
    * @return array
@@ -126,7 +139,7 @@ class ComposerPackages implements ComposerPackagesInterface {
       $filedata = $composer_json->read();
       $filedata += array('require' => array());
       foreach ($filedata['require'] as $package_name => $version) {
-        if ($this->manager->isValidPackageName($package_name)) {
+        if ($this->isValidPackageName($package_name)) {
           if (!isset($packages[$package_name])) {
             $packages[$package_name][$version] = array();
           }

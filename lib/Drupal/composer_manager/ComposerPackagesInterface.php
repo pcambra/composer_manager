@@ -20,6 +20,15 @@ interface ComposerPackagesInterface {
   public function getManager();
 
   /**
+   * Returns TRUE if the passed name is a valid Composer package name.
+   *
+   * @param string $package_name
+   *
+   * @return bool
+   */
+  public function isValidPackageName($package_name);
+
+  /**
    * Reads installed package versions from the composer.lock file.
    *
    * @return array

@@ -13,15 +13,6 @@ namespace Drupal\composer_manager;
 interface ComposerManagerInterface {
 
   /**
-   * Returns TRUE if the passed name is a valid Composer package name.
-   *
-   * @param string $package_name
-   *
-   * @return bool
-   */
-  public function isValidPackageName($package_name);
-
-  /**
    * Prepares and returns the realpath to the Composer file directory.
    *
    * @return string

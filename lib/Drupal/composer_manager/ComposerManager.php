@@ -16,8 +16,6 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
  */
 class ComposerManager implements ComposerManagerInterface {
 
-  const REGEX_PACKAGE = '@^[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9][A-Za-z0-9_.-]+$@';
-
   /**
    * The composer_manager.settings config object.
    *
@@ -56,17 +54,6 @@ class ComposerManager implements ComposerManagerInterface {
     $this->config = $config_factory->get('composer_manager.settings');
     $this->moduleHandler = $module_handler;
     $this->filesystem = $filesystem;
-  }
-
-  /**
-   * Returns TRUE if the passed name is a valid Composer package name.
-   *
-   * @param string $package_name
-   *
-   * @return bool
-   */
-  public function isValidPackageName($package_name) {
-    return preg_match(self::REGEX_PACKAGE, $package_name);
   }
 
   /**
