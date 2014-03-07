@@ -234,6 +234,30 @@ function composer_manager_rebuild_form_submit($form, &$form_state) {
 }
 
 /**
+ * Parses a JSON file into a PHP array.
+ *
+ * @param string $file_uri
+ *   The URI of the JSON sile being parsed.
+ *
+ * @return array
+ *   The parsed JSON, and empty array if the file doesn't exist.
+ *
+ * @throws \RuntimeException
+ */
+function composer_manager_read_composer_file($file_uri) {
+  $json = array();
+  if (file_exists($file_uri)) {
+    if (!$filedata = @file_get_contents($file_uri)) {
+      throw new \RuntimeException(t('Error reading file: @file', array('@file' => $file_uri)));
+    }
+    if (!$json = @json_decode($filedata, TRUE)) {
+      throw new \RuntimeException(t('Error parsing file: @file', array('@file' => $file_uri)));
+    }
+  }
+  return $json;
+}
+
+/**
  * Loads the composer.lock file if it exists.
  *
  * @return array
@@ -245,19 +269,24 @@ function composer_manager_lockfile_load() {
   $json = &composer_manager_static(__FUNCTION__);
   if ($json === NULL) {
     $dir_uri = variable_get('composer_manager_file_dir', file_directory_path() . '/composer');
-    $file_uri = $dir_uri . '/composer.lock';
+    $json = composer_manager_read_composer_file($dir_uri . '/composer.lock');
+  }
+  return $json;
+}
 
-    if (file_exists($file_uri)) {
-      if (!$filedata = @file_get_contents($file_uri)) {
-        throw new \RuntimeException(t('Error reading file: @file', array('@file' => $file_uri)));
-      }
-      if (!$json = json_decode($filedata, TRUE)) {
-        throw new \RuntimeException(t('Error parsing file: @file', array('@file' => $file_uri)));
-      }
-    }
-    else {
-      $json =  array();
-    }
+/**
+ * Loads the composer.lock file if it exists.
+ *
+ * @return array
+ *   The parsed JSON, and empty array if the file doesn't exist.
+ *
+ * @throws \RuntimeException
+ */
+function composer_manager_installed_packages_load() {
+  $json = &composer_manager_static(__FUNCTION__);
+  if ($json === NULL) {
+    $file_uri = composer_manager_vendor_dir() . '/composer/installed.json';
+    $json = composer_manager_read_composer_file($file_uri);
   }
   return $json;
 }
@@ -278,15 +307,13 @@ function composer_manager_installed_packages() {
   if (NULL === $installed) {
     $installed = array();
 
-    $json = composer_manager_lockfile_load();
-    if (isset($json['packages'])) {
-      foreach ($json['packages'] as $package) {
-        $installed[$package['name']] = array(
-          'version' => $package['version'],
-          'description' => !empty($package['description']) ? $package['description'] : '',
-          'homepage' => !empty($package['homepage']) ? $package['homepage'] : '',
-        );
-      }
+    $json = composer_manager_installed_packages_load();
+    foreach ($json as $package) {
+      $installed[$package['name']] = array(
+        'version' => $package['version'],
+        'description' => !empty($package['description']) ? $package['description'] : '',
+        'homepage' => !empty($package['homepage']) ? $package['homepage'] : '',
+      );
     }
 
     ksort($installed);
@@ -306,13 +333,11 @@ function composer_manager_installed_packages() {
 function composer_manager_package_dependents() {
   $dependents = array();
 
-  $json = composer_manager_lockfile_load();
-  if (isset($json['packages'])) {
-    foreach ($json['packages'] as $package) {
-      if (!empty($package['require'])) {
-        foreach ($package['require'] as $dependent => $version) {
-          $dependents[$dependent][] = $package['name'];
-        }
+  $json = composer_manager_installed_packages_load();
+  foreach ($json as $package) {
+    if (!empty($package['require'])) {
+      foreach ($package['require'] as $dependent => $version) {
+        $dependents[$dependent][] = $package['name'];
       }
     }
   }
