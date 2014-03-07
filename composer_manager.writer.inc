@@ -56,7 +56,14 @@ function composer_manager_build_json(array $data) {
   foreach ($data as $module => $json) {
 
     if (!$combined) {
-      $combined = array('require' => array());
+
+      $combined = array(
+        'require' => array(),
+        'config'  => array(
+          'autoloader-suffix' => 'ComposerManager',
+        ),
+      );
+
       $vendor_dir = composer_manager_relative_vendor_dir();
       if (0 !== strlen($vendor_dir) && 'vendor' != $vendor_dir) {
         $combined['config']['vendor-dir'] = $vendor_dir;
