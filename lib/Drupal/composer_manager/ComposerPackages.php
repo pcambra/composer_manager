@@ -127,7 +127,7 @@ class ComposerPackages implements ComposerPackagesInterface {
    * @throws \RuntimeException
    */
   public function getInstalled() {
-    $packages = array();
+    $packages = $this->manager->getCorePackages();
 
     $filedata = $this->getInstalledJsonFiledata();
     foreach ($filedata as $package) {
@@ -151,6 +151,12 @@ class ComposerPackages implements ComposerPackagesInterface {
   public function getRequired() {
     $packages = array();
 
+    // Read the packages that are hardcoded in core.
+    foreach ($this->manager->getCorePackages() as $package_name => $package) {
+      $packages[$package_name][$package['version']] = array('drupal');
+    }
+
+    // Read requirements from every module's composer.json file.
     $files = $this->getComposerJsonFiles();
     foreach ($files as $module => $composer_json) {
       $filedata = $composer_json->read();
@@ -321,7 +327,11 @@ class ComposerPackages implements ComposerPackagesInterface {
       if (!isset($merged['replace'])) {
         $merged['replace'] = array();
       }
-      $merged['replace'] += $this->manager->getCorePackages();
+
+      $packages = $this->manager->getCorePackages();
+      foreach ($packages as $package_name => $package) {
+        $merged['replace'][$package_name] = $package['version'];
+      }
 
       // The symfony/translation package included in core is not the full
       // release and only contains the TranslatorInterface interface, so we have

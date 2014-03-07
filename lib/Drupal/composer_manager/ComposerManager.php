@@ -139,9 +139,13 @@ class ComposerManager implements ComposerManagerInterface {
       $filedata = $composer_lock->read();
 
       foreach ($filedata as $package) {
-        $this->corePackages[$package['name']] = $package['version'];
+        $this->corePackages[$package['name']] = array(
+          'version' => $package['version'],
+          'description' => !empty($package['description']) ? $package['description'] : '',
+          'homepage' => !empty($package['homepage']) ? $package['homepage'] : '',
+        );
         if ('dev-master' == $package['version']) {
-          $this->corePackages[$package['name']] .= '#' . $package['source']['reference'];
+          $this->corePackages[$package['name']]['version'] .= '#' . $package['source']['reference'];
         }
       }
 

@@ -141,7 +141,15 @@ class Packages implements ContainerInjectionInterface {
         foreach ($required[$package_name] as $version => $module_names) {
           foreach ($module_names as $module_name) {
             $module_info = system_get_info('module', $module_name);
-            $modules[] = String::checkPlain($module_info['name']);
+            if ('drupal' == $module_name) {
+              $modules[] = 'Drupal';
+            }
+            elseif (isset($module_info['name'])) {
+              $modules[] = String::checkPlain($module_info['name']);
+            }
+            else {
+              $modules[] = String::checkPlain($module_name);
+            }
           }
         }
         $requirement .= t('Required by: ') . join(', ', $modules);
