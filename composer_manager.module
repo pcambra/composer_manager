@@ -9,7 +9,7 @@
 /**
  * Implements hook_menu_link_defaults().
  */
-function mymodule_menu_link_defaults() {
+function composer_manager_menu_link_defaults() {
   $links = array();
 
   $links['system.admin.config.system.composer_manager'] = array(
