@@ -326,6 +326,15 @@ class ComposerPackages implements ComposerPackagesInterface {
       }
       $merged['replace'] += $this->manager->getCorePackages();
 
+      // The symfony/translation package included in core is not the full
+      // release and only contains the TranslatorInterface interface, so we have
+      // to include the whole package, i.e. not replace it in the consolidated
+      // composer.json file even though Composer thinks it is installed.
+      // @see https://drupal.org/node/2212171
+      // @see https://drupal.org/comment/8555145#comment-8555145
+      $replace = &$merged['replace'];
+      unset($replace['symfony/translation']);
+
       // Replacing dev-master versions can cause dependency issues.
       if (strpos($merged['replace']['doctrine/annotations'], 'dev-master') === 0) {
         $merged['replace']['doctrine/annotations'] = '>=1.1.2';

@@ -33,9 +33,17 @@ class ComposerJsonMerger extends \ArrayObject {
    */
   public function __construct(ComposerPackagesInterface $packages) {
     $this->packages = $packages;
+    $data = array('config' => array());
+
+    // Make absolutely sure that the core autoload.php file is sourced. This is
+    // mostly required for running executables that are linked to in a module's
+    // requirements. In the context of Drupal it is not a problem that this file
+    // is sourced twice as Composer is smart enough to register the autoloader
+    // only once.
+    // @see https://drupal.org/node/2212171
+    $data['autoload']['files'] = array(DRUPAL_ROOT . '/core/vendor/autoload.php');
 
     // Calculates the relative path the the configured vendor directory.
-    $data = array('config' => array());
     $vendor_dir = $this->getRelativeVendorDirectory();
     if (0 !== strlen($vendor_dir) && 'vendor' != $vendor_dir) {
       $data['config']['vendor-dir'] = $vendor_dir;
