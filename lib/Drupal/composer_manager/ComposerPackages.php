@@ -119,10 +119,7 @@ class ComposerPackages implements ComposerPackagesInterface {
   }
 
   /**
-   * Reads installed package versions from the composer.lock file.
-   *
-   * NOTE: Tried using `composer show -i`, but it didn't return the versions or
-   * descriptions for some reason even though it does on the command line.
+   * Reads installed package versions from the /vendor/ file.
    *
    * @return array
    *   An associative array of package version information.

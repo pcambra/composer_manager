@@ -135,16 +135,17 @@ class ComposerManager implements ComposerManagerInterface {
   public function getCorePackages() {
     if (!$this->corePackages) {
 
-      $composer_lock = new ComposerFile(DRUPAL_ROOT . '/composer.lock');
+      $composer_lock = new ComposerFile(DRUPAL_ROOT . '/core/vendor/composer/installed.json');
       $filedata = $composer_lock->read();
 
-      foreach ($filedata['packages'] as $package) {
+      foreach ($filedata as $package) {
         $this->corePackages[$package['name']] = $package['version'];
         if ('dev-master' == $package['version']) {
           $this->corePackages[$package['name']] .= '#' . $package['source']['reference'];
         }
       }
 
+      ksort($this->corePackages);
     }
 
     return $this->corePackages;
