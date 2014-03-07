@@ -5,7 +5,7 @@
  */
 function zendframework_dependency_composer_json_alter(&$json) {
   $packages = Drupal::service('composer_manager.manager')->getCorePackages();
-  $version = $packages['zendframework/zend-feed'];
+  $version = $packages['zendframework/zend-feed']['version'];
 
   // Replace the monolithic zendframework/zendframework package.
   $json['replace']['zendframework/zendframework'] = $version;

@@ -5,7 +5,7 @@
  */
 function guzzle_dependency_composer_json_alter(&$json) {
   $packages = Drupal::service('composer_manager.manager')->getCorePackages();
-  $version = $packages['guzzle/http'];
+  $version = $packages['guzzle/http']['version'];
 
   // Replace the monolithic guzzle/guzzle package.
   $json['replace']['guzzle/guzzle'] = $version;

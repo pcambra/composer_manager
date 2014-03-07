@@ -104,6 +104,20 @@ class Packages implements ContainerInjectionInterface {
       // update.
       $not_required = $is_installed && !isset($dependents[$package_name]) && empty($required[$package_name]);
 
+      // Hacky, but we have to account for situations where we split up the full
+      // packages into their components to avoid version conflicts with core.
+      // @see https://drupal.org/node/2209745
+      // @see https://drupal.org/comment/8532213#comment-8532213
+      if ($not_required) {
+        $vendors = array('guzzle', 'symfony', 'zendframework');
+        foreach ($vendors as $vendor) {
+          if (isset($dependents[$vendor . '/' . $vendor]) && strpos($package_name, $vendor . '/') === 0) {
+            $not_required = FALSE;
+            break;
+          }
+        }
+      }
+
       // Get the package name and description.
       if ($is_installed && !empty($installed[$package_name]['homepage'])) {
         $options = array('attributes' => array('target' => '_blank'));

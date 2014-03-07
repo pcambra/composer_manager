@@ -5,7 +5,7 @@
  */
 function symfony_dependency_composer_json_alter(&$json) {
   $packages = Drupal::service('composer_manager.manager')->getCorePackages();
-  $version = $packages['symfony/event-dispatcher'];
+  $version = $packages['symfony/event-dispatcher']['version'];
 
   // Replace the monolithic symfony/symfony package.
   $json['replace']['symfony/symfony'] = $version;
