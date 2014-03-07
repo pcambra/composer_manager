@@ -42,6 +42,13 @@ class ComposerPackages implements ComposerPackagesInterface {
   private $composerLockFiledata;
 
   /**
+   * The vendor/composer/installed.json file data parsed as a PHP array.
+   *
+   * @var array
+   */
+  private $installedJsonFiledata;
+
+  /**
    * Whether the composer.json file was written during this request.
    *
    * @var bool
@@ -99,6 +106,19 @@ class ComposerPackages implements ComposerPackagesInterface {
   }
 
   /**
+   * Returns the vendor/composer/installed.json file data parsed as a PHP array.
+   *
+   * @return array
+   */
+  public function getInstalledJsonFiledata() {
+    if (!isset($this->installedJsonFiledata)) {
+      $installed_json = new ComposerFile($this->manager->getVendorDirectory() . '/composer/installed.json');
+      $this->installedJsonFiledata = $installed_json->exists() ? $installed_json->read() : array();
+    }
+    return $this->installedJsonFiledata;
+  }
+
+  /**
    * Reads installed package versions from the composer.lock file.
    *
    * NOTE: Tried using `composer show -i`, but it didn't return the versions or
@@ -112,8 +132,8 @@ class ComposerPackages implements ComposerPackagesInterface {
   public function getInstalled() {
     $packages = array();
 
-    $filedata = $this->getComposerLockFiledata();
-    foreach ($filedata['packages'] as $package) {
+    $filedata = $this->getInstalledJsonFiledata();
+    foreach ($filedata as $package) {
       $packages[$package['name']] = array(
         'version' => $package['version'],
         'description' => !empty($package['description']) ? $package['description'] : '',
@@ -163,8 +183,8 @@ class ComposerPackages implements ComposerPackagesInterface {
   public function getDependencies() {
     $packages = array();
 
-    $filedata = $this->getComposerLockFiledata();
-    foreach ($filedata['packages'] as $package) {
+    $filedata = $this->getInstalledJsonFiledata();
+    foreach ($filedata as $package) {
       if (!empty($package['require'])) {
         foreach ($package['require'] as $dependent => $version) {
           $packages[$dependent][] = $package['name'];
