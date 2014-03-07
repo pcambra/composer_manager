@@ -35,11 +35,15 @@ class ComposerJsonMerger extends \ArrayObject {
     $this->packages = $packages;
 
     // Calculates the relative path the the configured vendor directory.
-    $data = array();
+    $data = array('config' => array());
     $vendor_dir = $this->getRelativeVendorDirectory();
     if (0 !== strlen($vendor_dir) && 'vendor' != $vendor_dir) {
       $data['config']['vendor-dir'] = $vendor_dir;
     }
+
+    $data['config'] += array(
+      'autoloader-suffix' => 'ComposerManager',
+    );
 
     // Stores the composer file directory for the relative autoload path
     // calculation.
