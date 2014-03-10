@@ -10,7 +10,7 @@
  */
 function composer_manager_requirements($phase) {
   if ('runtime' != $phase) {
-    return;
+    return array();
   }
 
   /* @var $packages Drupal\composer_manager\ComposerPackages */
