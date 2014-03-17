@@ -34,7 +34,7 @@ function composer_manager_enable() {
  */
 function composer_manager_requirements($phase) {
   if ('runtime' != $phase) {
-    return;
+    return array();
   }
 
   $t = get_t();
