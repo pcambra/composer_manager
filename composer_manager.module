@@ -7,22 +7,6 @@
  */
 
 /**
- * Implements hook_menu_link_defaults().
- */
-function composer_manager_menu_link_defaults() {
-  $links = array();
-
-  $links['system.admin.config.system.composer_manager'] = array(
-    'link_title' => 'Composer Manager',
-    'description' => 'View the status of packages managed by Composer and configure the location of the composer.json file and verdor directory.',
-    'parent' => 'system.admin_config_system',
-    'route_name' => 'composer_manager.packages_page',
-  );
-
-  return $links;
-}
-
-/**
  * Implements hook_modules_installed().
  *
  * @see composer_manager_write_if_changed()
