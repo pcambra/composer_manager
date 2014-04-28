@@ -7,8 +7,8 @@
 
 namespace Drupal\composer_manager;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\String;
-use Drupal\Component\Utility\Json;
 
 class ComposerFile implements ComposerFileInterface {
 
