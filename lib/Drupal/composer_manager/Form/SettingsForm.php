@@ -69,7 +69,7 @@ class SettingsForm extends ConfigFormBase implements FormInterface, ContainerInj
   public function buildForm(array $form, array &$form_state) {
     $form = parent::buildForm($form, $form_state);
 
-    $config = $this->configFactory->get('composer_manager.settings');
+    $config = $this->config('composer_manager.settings');
     $form['composer_manager_vendor_dir'] = array(
       '#title' => 'Vendor Directory',
       '#type' => 'textfield',
@@ -118,7 +118,7 @@ class SettingsForm extends ConfigFormBase implements FormInterface, ContainerInj
 
   public function submitForm(array &$form, array &$form_state) {
     parent::submitForm($form, $form_state);
-    $this->configFactory->get('composer_manager.settings')
+    $this->config('composer_manager.settings')
       ->set('vendor_dir', $form_state['values']['composer_manager_vendor_dir'])
       ->set('file_dir', $form_state['values']['composer_manager_file_dir'])
       ->set('autobuild_file', $form_state['values']['composer_manager_autobuild_file'])
