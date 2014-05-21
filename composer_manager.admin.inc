@@ -250,8 +250,11 @@ function composer_manager_read_composer_file($file_uri) {
     if (!$filedata = @file_get_contents($file_uri)) {
       throw new \RuntimeException(t('Error reading file: @file', array('@file' => $file_uri)));
     }
-    if (!$json = @json_decode($filedata, TRUE)) {
+    if (($json = @json_decode($filedata, TRUE) === NULL)) {
       throw new \RuntimeException(t('Error parsing file: @file', array('@file' => $file_uri)));
+    }
+    elseif ($json === FALSE) {
+      $json = array();
     }
   }
   return $json;
