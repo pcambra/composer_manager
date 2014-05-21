@@ -74,15 +74,23 @@ function drush_composer_manager($command = 'install') {
     _drush_find_commandfiles(DRUSH_BOOTSTRAP_DRUSH);
   }
 
-  // Generate the command arguments to pass to Drush Composer. Additional
-  // arguments are read directly from argv.
-  $arguments = array(
-    $command,
-    // The use of escapeshellcmd rather than escapeshellarg is necessary to
-    // avoid enclosing the value in quotes, which is incompatible with the way
-    // Composer validates that the working directory exists.
-    '--working-dir=' . escapeshellcmd($dir),
-  );
+  // Generate the command arguments to pass to Drush Composer.
+  $drush_arguments = drush_get_arguments();
+  if ($drush_arguments && $drush_arguments[0] === 'composer-manager') {
+    $arguments = $drush_arguments;
+    array_shift($arguments); // exclude drush main command, composer-manager 
+    $arguments[] = '--working-dir=' . escapeshellcmd($dir);
+  }
+  else {
+    $arguments = array(
+      $command,
+      // The use of escapeshellcmd rather than escapeshellarg is necessary to
+      // avoid enclosing the value in quotes, which is incompatible with the way
+      // Composer validates that the working directory exists.
+      '--working-dir=' . escapeshellcmd($dir),
+    );
+  }
+
   return drush_invoke('composer', $arguments);
 }
 
