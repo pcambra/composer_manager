@@ -78,7 +78,7 @@ function drush_composer_manager($command = 'install') {
   $drush_arguments = drush_get_arguments();
   if ($drush_arguments && $drush_arguments[0] === 'composer-manager') {
     $arguments = $drush_arguments;
-    array_shift($arguments); // exclude drush main command, composer-manager 
+    array_shift($arguments); // exclude drush main command, composer-manager
     $arguments[] = '--working-dir=' . escapeshellcmd($dir);
   }
   else {
@@ -91,7 +91,13 @@ function drush_composer_manager($command = 'install') {
     );
   }
 
-  return drush_invoke('composer', $arguments);
+  $composer_result = drush_invoke('composer', $arguments);
+  // Allow modules to perform post-composer install tasks.
+  if ($command == 'install' || $command == 'update') {
+    module_invoke_all('composer_dependencies_install');
+  }
+
+  return $composer_result;
 }
 
 /**
