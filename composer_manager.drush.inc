@@ -73,7 +73,9 @@ function drush_composer_manager($command = 'install') {
     // Clear the caches by reloading the available command files.
     _drush_find_commandfiles(DRUSH_BOOTSTRAP_DRUSH);
   }
-
+  if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+    $dir = str_replace('\\', '/', $dir);
+  }
   // Generate the command arguments to pass to Drush Composer.
   $drush_arguments = drush_get_arguments();
   if ($drush_arguments && $drush_arguments[0] === 'composer-manager') {
