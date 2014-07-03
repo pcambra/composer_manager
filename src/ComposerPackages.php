@@ -380,9 +380,9 @@ class ComposerPackages implements ComposerPackagesInterface {
   }
 
   /**
-   * Returns TRUE if at least one passed modules has a composer.json file,
-   * which flags that the list of packages managed by Composer Manager have
-   * changed.
+   * Returns TRUE if at least one passed modules has a composer.json file or
+   * implements hook_composer_json_alter(). These conditions indicate that the
+   * consolidated composer.json file has likely changed.
    *
    * @param array $modules
    *   The list of modules being scanned for composer.json files, usually a list
@@ -392,11 +392,19 @@ class ComposerPackages implements ComposerPackagesInterface {
    */
   public function haveChanges(array $modules) {
     foreach ($modules as $module) {
+
+      // Check if the module has a composer.json file.
       $filepath = drupal_get_path('module', $module) . '/composer.json';
       $composer_json = new ComposerFile($filepath);
       if ($composer_json->exists()) {
         return TRUE;
       }
+
+      // Check if the module implements hook_composer_json_alter().
+      if ($this->moduleHandler->implementsHook($module, 'composer_json_alter')) {
+        return TRUE;
+      }
+
     }
     return FALSE;
   }
