@@ -367,6 +367,9 @@ class ComposerPackages implements ComposerPackagesInterface {
       if (strpos($merged['replace']['doctrine/common'], 'dev-master') === 0) {
         $merged['replace']['doctrine/common'] = '>=2.4.1';
       }
+      if (strpos($merged['replace']['phpunit/phpunit-mock-objects'], 'dev-master') === 0) {
+        $merged['replace']['phpunit/phpunit-mock-objects'] = '>=2.1.5';
+      }
       if (strpos($merged['replace']['symfony/yaml'], 'dev-master') === 0) {
         $merged['replace']['symfony/yaml'] = '>=2.4.1';
       }
