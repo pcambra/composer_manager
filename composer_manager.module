@@ -42,7 +42,7 @@ function composer_manager_write_if_changed(array $modules) {
   $manager = $packages->getManager();
 
   if ($manager->autobuildComposerJsonFile() && $packages->haveChanges($modules)) {
-    if ($packages->writeComposerJsonFile() !== FALSE) {
+    if ($packages->writeComposerJsonFile(array()) !== FALSE) {
 
       // Displays a message to admins that a file was written.
       if (Drupal::currentUser()->hasPermission('administer site configuration')) {
