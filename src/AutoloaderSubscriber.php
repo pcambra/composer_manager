@@ -43,7 +43,7 @@ class AutoloaderSubscriber implements EventSubscriberInterface {
       $this->manager->registerAutolaoder();
     }
     catch (\RuntimeException $e) {
-      if (!drupal_is_cli()) {
+      if (PHP_SAPI !== 'cli') {
         $link = l('admin/config/system/composer-manager', 'admin/config/system/composer-manager');
         watchdog_exception('composer_manager', $e, NULL, array(), WATCHDOG_WARNING, $link);
       }

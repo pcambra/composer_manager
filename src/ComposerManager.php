@@ -163,7 +163,7 @@ class ComposerManager implements ComposerManagerInterface {
    * @return bool
    */
   public function autobuildComposerJsonFile() {
-    return drupal_is_cli() || $this->config->get('autobuild_file');
+    return (PHP_SAPI === 'cli') || $this->config->get('autobuild_file');
   }
 
   /**
