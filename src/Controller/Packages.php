@@ -219,7 +219,7 @@ class Packages implements ContainerInjectionInterface {
     );
 
     $rebuild_form = new RebuildForm($this->configFactory);
-    $build['refresh_form'] = drupal_get_form($rebuild_form);
+    $build['refresh_form'] = \Drupal::formBuilder()->getForm($rebuild_form);
 
     // Get requirements so we can display them on the packages page.
     $this->moduleHandler->loadInclude('composer_manager', 'install');
