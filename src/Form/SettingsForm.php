@@ -7,7 +7,7 @@
 
 namespace Drupal\composer_manager\Form;
 
-use Drupal\Core\Config\ConfigFactory;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Form\FormInterface;
 use Drupal\Core\Form\ConfigFormBase;
@@ -35,11 +35,11 @@ class SettingsForm extends ConfigFormBase implements FormInterface, ContainerInj
   /**
    * Constructs a \Drupal\composer_manager\SettingsForm object.
    *
-   * @param \Drupal\Core\Config\ConfigFactory $config_factory
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    * @param \Drupal\composer_manager\FilesystemInterface $filesystem
    */
-  public function __construct(ConfigFactory $config_factory, ModuleHandlerInterface $module_handler, FilesystemInterface $filesystem) {
+  public function __construct(ConfigFactoryInterface $config_factory, ModuleHandlerInterface $module_handler, FilesystemInterface $filesystem) {
     parent::__construct($config_factory);
     $this->moduleHandler = $module_handler;
     $this->filesystem = $filesystem;

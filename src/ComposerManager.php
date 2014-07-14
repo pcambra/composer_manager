@@ -8,7 +8,7 @@
 namespace Drupal\composer_manager;
 
 use Drupal\Component\Utility\String;
-use Drupal\Core\Config\ConfigFactory;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 
 /**
@@ -46,11 +46,11 @@ class ComposerManager implements ComposerManagerInterface {
   /**
    * Constructs a \Drupal\composer_manager\ComposerManager object.
    *
-   * @param \Drupal\Core\Config\ConfigFactory $config_factory
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    * @param \Drupal\composer_manager\FilesystemInterface $filesystem
    */
-  public function __construct(ConfigFactory $config_factory, ModuleHandlerInterface $module_handler, FilesystemInterface $filesystem) {
+  public function __construct(ConfigFactoryInterface $config_factory, ModuleHandlerInterface $module_handler, FilesystemInterface $filesystem) {
     $this->config = $config_factory->get('composer_manager.settings');
     $this->moduleHandler = $module_handler;
     $this->filesystem = $filesystem;

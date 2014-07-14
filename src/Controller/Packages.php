@@ -10,7 +10,7 @@ namespace Drupal\composer_manager\Controller;
 use Drupal\Component\Utility\String;
 use Drupal\Component\Utility\Xss;
 use Drupal\composer_manager\Form\RebuildForm;
-use Drupal\Core\Config\ConfigFactory;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -40,10 +40,10 @@ class Packages implements ContainerInjectionInterface {
    * Constructs a \Drupal\composer_manager\Controller\Packages object.
    *
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
-   * @param \Drupal\Core\Config\ConfigFactory $config_factory
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    * @param \Drupal\composer_manager\ComposerPackagesInterface $packages
    */
-  public function __construct(ModuleHandlerInterface $module_handler, ConfigFactory $config_factory, ComposerPackagesInterface $packages) {
+  public function __construct(ModuleHandlerInterface $module_handler, ConfigFactoryInterface $config_factory, ComposerPackagesInterface $packages) {
     $this->moduleHandler = $module_handler;
     $this->configFactory = $config_factory;
     $this->packages = $packages;
