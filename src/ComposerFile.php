@@ -74,7 +74,16 @@ class ComposerFile implements ComposerFileInterface {
       if (!$filedata = @file_get_contents($this->filepath)) {
         throw new \RuntimeException(t('Error reading file: @filepath', array('@filepath' => $this->filepath)));
       }
-      $this->filedata = Json::decode($filedata);
+      $json = Json::decode($filedata);
+      if (NULL === $json) {
+        throw new \RuntimeException(t('Error parsing file: @filepath', array('@filepath' => $this->filepath)));
+      }
+      elseif (FALSE === $json) {
+        $this->filedata = array();
+      }
+      else {
+        $this->filedata = $json;
+      }
     }
     return $this->filedata;
   }
