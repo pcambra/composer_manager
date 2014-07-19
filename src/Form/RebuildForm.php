@@ -7,7 +7,7 @@
 
 namespace Drupal\composer_manager\Form;
 
-use Drupal\Core\Config\ConfigFactory;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Form\FormInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -29,9 +29,9 @@ class RebuildForm implements FormInterface, ContainerInjectionInterface {
   /**
    * Constructs a \Drupal\composer_manager\Form\RebuildForm object.
    *
-   * @param \Drupal\Core\Config\ConfigFactory $config_factory
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    */
-  public function __construct(ConfigFactory $config_factory) {
+  public function __construct(ConfigFactoryInterface $config_factory) {
     $this->config = $config_factory->get('composer_manager.settings');
   }
 
