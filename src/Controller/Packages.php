@@ -7,6 +7,7 @@
 
 namespace Drupal\composer_manager\Controller;
 
+use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Component\Utility\String;
 use Drupal\Component\Utility\Xss;
 use Drupal\composer_manager\Form\RebuildForm;
@@ -200,9 +201,9 @@ class Packages implements ContainerInjectionInterface {
       $rows[$package_name] = array(
         'class' => $class,
         'data' => array(
-          'package' => $name,
+          'package' => SafeMarkup::set($name),
           'installed' => $instaled_version,
-          'requirement' => $requirement,
+          'requirement' => SafeMarkup::set($requirement),
         ),
       );
     }
