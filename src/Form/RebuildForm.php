@@ -10,6 +10,7 @@ namespace Drupal\composer_manager\Form;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Form\FormInterface;
+use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -54,7 +55,7 @@ class RebuildForm implements FormInterface, ContainerInjectionInterface {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, array &$form_state) {
+  public function buildForm(array $form, FormStateInterface $form_state) {
     $file_dir = $this->config->get('file_dir');
 
     $form['include'] = array(
@@ -75,18 +76,19 @@ class RebuildForm implements FormInterface, ContainerInjectionInterface {
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, array &$form_state) {
+  public function validateForm(array &$form, FormStateInterface $form_state) {
   }
 
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, array &$form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state) {
     try {
       $other_modules = array();
+      $form_state_values = $form_state->getValues();
 
-      if (!empty($form_state['values']['include'])) {
-        $other_modules = preg_split('/,[\s]?/', $form_state['values']['include']);
+      if (!empty($form_state_values['include'])) {
+        $other_modules = preg_split('/,[\s]?/', $form_state_values['include']);
       }
 
       /* @var $packages \Drupal\composer_manager\ComposerPackagesInterface */

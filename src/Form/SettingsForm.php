@@ -10,6 +10,7 @@ namespace Drupal\composer_manager\Form;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Form\FormInterface;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
@@ -66,7 +67,7 @@ class SettingsForm extends ConfigFormBase implements FormInterface, ContainerInj
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, array &$form_state) {
+  public function buildForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildForm($form, $form_state);
 
     $config = $this->config('composer_manager.settings');
@@ -104,7 +105,7 @@ class SettingsForm extends ConfigFormBase implements FormInterface, ContainerInj
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, array &$form_state) {
+  public function validateForm(array &$form, FormStateInterface $form_state) {
     parent::validateForm($form, $form_state);
 
     $this->moduleHandler->loadInclude('composer_manager', 'inc', 'composer_manager.writer');
@@ -112,17 +113,18 @@ class SettingsForm extends ConfigFormBase implements FormInterface, ContainerInj
     $autobuild_file = $form_state['values']['composer_manager_autobuild_file'];
     $file_dir = $form_state['values']['composer_manager_file_dir'];
     if ($autobuild_file && !$this->filesystem->prepareDirectory($file_dir)) {
-      \Drupal::formBuilder()->setErrorByName('composer_manager_file_dir', $form_state, t('Composer file directory must be writable'));
+      $form_state->setErrorByName('composer_manager_file_dir', t('Composer file directory must be writable'));
     }
   }
 
-  public function submitForm(array &$form, array &$form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state) {
     parent::submitForm($form, $form_state);
+    $form_state_values = $form_state->getValues();
     $this->config('composer_manager.settings')
-      ->set('vendor_dir', $form_state['values']['composer_manager_vendor_dir'])
-      ->set('file_dir', $form_state['values']['composer_manager_file_dir'])
-      ->set('autobuild_file', $form_state['values']['composer_manager_autobuild_file'])
-      ->set('autobuild_packages', $form_state['values']['composer_manager_autobuild_packages'])
+      ->set('vendor_dir', $form_state_values['composer_manager_vendor_dir'])
+      ->set('file_dir', $form_state_values['composer_manager_file_dir'])
+      ->set('autobuild_file', $form_state_values['composer_manager_autobuild_file'])
+      ->set('autobuild_packages', $form_state_values['composer_manager_autobuild_packages'])
     ->save();
   }
 
