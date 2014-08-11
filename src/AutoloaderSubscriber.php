@@ -31,7 +31,7 @@ class AutoloaderSubscriber implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return array(
-      KernelEvents::REQUEST => array('onRequest', -999),
+      KernelEvents::REQUEST => array('onRequest', 999),
     );
   }
 
